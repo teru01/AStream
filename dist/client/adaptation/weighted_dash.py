@@ -1,6 +1,6 @@
 __author__ = 'pjuluri'
 
-import config_dash
+from .. import config_dash
 
 
 def weighted_dash(bitrates, dash_player, weighted_dwn_rate, curr_bitrate, next_segment_sizes):
@@ -9,7 +9,7 @@ def weighted_dash(bitrates, dash_player, weighted_dwn_rate, curr_bitrate, next_s
     :param bitrates: List of bitrates
     :param weighted_dwn_rate:
     :param curr_bitrate:
-    :param next_segment_sizes: A dict mapping bitrate: size of next segment
+    :param next_segment_sizes: A dict mapping bitrate: size of next segment:
     :return: next_bitrate, delay
     """
     bitrates = [int(i) for i in bitrates]

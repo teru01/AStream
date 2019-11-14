@@ -33,12 +33,6 @@ from . import dash_buffer
 from .configure_log_file import configure_log_file, write_json
 import time
 
-try:
-    WindowsError
-except NameError:
-    from shutil import WindowsError
-
-
 # Constants
 DEFAULT_PLAYBACK = 'BASIC'
 DOWNLOAD_CHUNK = 1024
@@ -87,7 +81,7 @@ def get_mpd(url):
     mpd_data = connection.read()
     connection.close()
     mpd_file = url.split('/')[-1]
-    mpd_file_handle = open(mpd_file, 'w')
+    mpd_file_handle = open(mpd_file, 'wb')
     mpd_file_handle.write(mpd_data)
     mpd_file_handle.close()
     config_dash.LOG.info("Downloaded the MPD file {}".format(mpd_file))
@@ -419,7 +413,7 @@ def clean_files(folder_path):
                 if os.path.isfile(file_path):
                     os.unlink(file_path)
             os.rmdir(folder_path)
-        except (WindowsError, OSError) as e:
+        except OSError as e:
             config_dash.LOG.info("Unable to delete the folder {}. {}".format(folder_path, e))
         config_dash.LOG.info("Deleted the folder '{}' and its contents".format(folder_path))
 
