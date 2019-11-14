@@ -222,3 +222,6 @@ media/
 .idea/
 data/
 tools/
+
+*.mpd
+ASTREAM_LOGS
