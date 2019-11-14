@@ -1,11 +1,11 @@
-from __future__ import division
-import Queue
+
+import queue
 import threading
 import time
 import csv
 import os
-import config_dash
-from stop_watch import StopWatch
+from . import config_dash
+from .stop_watch import StopWatch
 
 # Durations in seconds
 PLAYER_STATES = ['INITIALIZED', 'INITIAL_BUFFERING', 'PLAY',
@@ -43,7 +43,7 @@ class DashPlayer:
         self.beta = config_dash.BETA_BUFFER_COUNT
         self.segment_limit = None
         # Current video buffer that holds the segment data
-        self.buffer = Queue.Queue()
+        self.buffer = queue.Queue()
         self.buffer_lock = threading.Lock()
         self.current_segment = None
         self.buffer_log_file = config_dash.BUFFER_LOG_FILENAME

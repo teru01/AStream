@@ -1,12 +1,12 @@
 import os
 import sys
 import cgi
-import urllib
+import urllib.request, urllib.parse, urllib.error
 
 try:
-    from cStringIO import StringIO
+    from io import StringIO
 except:
-    from StringIO import StringIO
+    from io import StringIO
 
 def list_directory(path):
     """Helper to produce a directory listing (absent index.html).
@@ -16,15 +16,15 @@ def list_directory(path):
     From SimpleHTTPServer.py
 
     """
-    print "Get DIR listing for ", path 
+    print("Get DIR listing for ", path) 
     try:
         dir_list = os.listdir(path)
-        print "The path for ", path, " is ", list
+        print("The path for ", path, " is ", list)
     except os.error:
         response = "404  No permission to list directory"
     dir_list.sort(key=lambda a: a.lower())
     f = StringIO()
-    displaypath = cgi.escape(urllib.unquote(path))
+    displaypath = cgi.escape(urllib.parse.unquote(path))
     f.write('<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">')
     f.write("<html>\n<title>Directory listing for %s</title>\n" % displaypath)
     f.write("<body>\n<h2>Directory listing for %s</h2>\n" % displaypath)
@@ -40,7 +40,7 @@ def list_directory(path):
             displayname = name + "@"
             # Note: a link to a directory displays with @ and links with /
         f.write('<li><a href="%s">%s</a>\n'
-                % (urllib.quote(linkname), cgi.escape(displayname)))
+                % (urllib.parse.quote(linkname), cgi.escape(displayname)))
     f.write("</ul>\n<hr>\n</body>\n</html>\n")
     length = f.tell()
     f.seek(0)
