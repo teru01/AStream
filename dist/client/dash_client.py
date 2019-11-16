@@ -196,6 +196,9 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
     file_identifier = id_generator()
     config_dash.LOG.info("The segments are stored in %s" % file_identifier)
     dp_list = defaultdict(defaultdict)
+    # with open("dp_obj.txt", "w") as f:
+    #     for i, d in dp_object.video.items():
+    #         f.write("{}: {}\n".format(i, d))
     # Creating a Dictionary of all that has the URLs for each segment and different bitrates
     for bitrate in dp_object.video:
         # Getting the URL list for each bitrate
@@ -207,16 +210,24 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
                 "$Bandwidth$", str(bitrate))
         media_urls = [dp_object.video[bitrate].initialization] + dp_object.video[bitrate].url_list
         #print "media urls"
-        #print media_urls
+        # if mdShow:
+        #     with open("md.txt", "w") as f:
+        #         for i, m in enumerate(media_urls):
+        #             f.write("{}: {}\n".format(i, m))
+        #     mdShow = False
         for segment_count, segment_url in enumerate(media_urls, dp_object.video[bitrate].start):
             # segment_duration = dp_object.video[bitrate].segment_duration
             #print "segment url"
             #print segment_url
+            # print(segment_url)
             dp_list[segment_count][bitrate] = segment_url
     bitrates = list(dp_object.video.keys())
     bitrates.sort()
     average_dwn_time = 0
     segment_files = []
+    # with open("dp_list.txt", "w") as f:
+    #     for i, d in dp_list.items():
+    #         f.write("{}: {}\n".format(i, d))
     # For basic adaptation
     previous_segment_times = []
     recent_download_sizes = []
@@ -302,6 +313,8 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
                 current_bitrate, average_dwn_time = basic_dash.basic_dash(segment_number, bitrates, average_dwn_time,
                                                                           segment_download_time, current_bitrate)
         segment_path = dp_list[segment][current_bitrate]
+        # config_dash.LOG.info("segment: {}, current_bit: {}".format(segment, current_bitrate))
+        # config_dash.LOG.info("segpath: {}, cur_bit: {}, bitlist: {}".format(segment_path, current_bitrate, dp_list[segment]))
         #print   "domain"
         #print domain
         #print "segment"

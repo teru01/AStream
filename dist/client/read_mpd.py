@@ -27,6 +27,8 @@ except ImportError:
 MEDIA_PRESENTATION_DURATION = 'mediaPresentationDuration'
 MIN_BUFFER_TIME = 'minBufferTime'
 
+BITRATE_MAP = {'45652': '50', '89283': '100', '131087': '150', '178351': '200', '221600': '250', '262537': '300', '334349': '400', '396126': '500', '522286': '600', '595491': '700', '791182': '900', '1032682': '1200', '1244778': '1500', '1546902': '2000', '2133691': '2500', '2484135': '3000', '3078587': '4000', '3526922': '5000', '3840360': '6000', '4219897': '8000'}
+
 
 def get_tag_name(xml_element):
     """ Module to remove the xmlns tag from the name
@@ -110,8 +112,9 @@ def get_url_list(media, segment_duration,  playback_duration, bitrate):
                 break
             total_playback += segment_duration
     elif FORMAT == 1:
-        media.url_list = URL_LIST
+        media.url_list = list(filter(lambda url: True if url.split('/')[1].split('_')[2][:-4] == BITRATE_MAP[str(bitrate)] else False, URL_LIST))
     #print media.url_list
+    print("FORMAT: ", FORMAT)
     return media
 
 
