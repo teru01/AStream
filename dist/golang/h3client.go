@@ -31,15 +31,11 @@ func h3client(addr string) []byte {
 	hclient = http.Client{
 		Transport: roundTripper,
 	}
-	fmt.Printf("GET %s\n", addr)
+	fmt.Printf("golang: GET %s\n", addr)
 	rsp, err := hclient.Get(addr) // 以前のコネクションを使いまわしたい
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("GET response %s: %#v\n", addr, rsp)
-	rsp, _ = hclient.Get(addr)
-	fmt.Printf("GET response %s: %#v\n", addr, rsp)
-
 	body := &bytes.Buffer{}
 	_, err = io.Copy(body, rsp.Body)
 	if err != nil {

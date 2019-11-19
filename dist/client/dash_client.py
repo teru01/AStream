@@ -45,6 +45,7 @@ PLAYBACK = DEFAULT_PLAYBACK
 DOWNLOAD = False
 SEGMENT_LIMIT = None
 
+connection = None
 
 class DashPlayback:
     """
