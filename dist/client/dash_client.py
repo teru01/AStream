@@ -32,6 +32,7 @@ from . import config_dash
 from . import dash_buffer
 from .configure_log_file import configure_log_file, write_json
 import time
+from ctypes import *
 
 # Constants
 DEFAULT_PLAYBACK = 'BASIC'
@@ -44,8 +45,9 @@ LIST = False
 PLAYBACK = DEFAULT_PLAYBACK
 DOWNLOAD = False
 SEGMENT_LIMIT = None
+PROTOCOL = "h2"
 
-connection = None
+http_connection = None
 
 class DashPlayback:
     """
@@ -60,12 +62,33 @@ class DashPlayback:
         self.video = dict()
 
 
+class Connection:
+    def __init__(self, proto):
+        libh3 = cdll.LoadLibrary("./golang/h3client.so")
+        libh2 = cdll.LoadLibrary("./golang/h2client.so")
+        if proto == "h2":
+            self.request = libh2.H2client
+        elif proto == "h3":
+            self.request = libh3.h3client
+        else:
+            print("undefined protocol")
+            sys.exit(0)
+        self.request.argtypes = [c_char_p]
+        self.request.restype = POINTER(c_ubyte*8)
+
+    def read(self, url):
+        ptr = self.request(url.encode('utf8'))
+        length = int.from_bytes(ptr.contents, byteorder="little")
+        data = bytes(cast(ptr,
+                POINTER(c_ubyte*(8 + length))
+                ).contents[8:])
+        return data
+
 def get_mpd(url):
     """ Module to download the MPD from the URL and save it to file"""
     print(url)
     try:
-        # 毎回3whsしてる..
-        connection = urllib.request.urlopen(url, timeout=10)
+        connection = http_connection
     except urllib.error.HTTPError as error:
         config_dash.LOG.error("Unable to download MPD file HTTP Error: %s" % error.code)
         return None
@@ -80,8 +103,7 @@ def get_mpd(url):
         config_dash.LOG.error(message)
         return None
     
-    mpd_data = connection.read()
-    connection.close()
+    mpd_data = connection.read(url)
     mpd_file = url.split('/')[-1]
     mpd_file_handle = open(mpd_file, 'wb')
     mpd_file_handle.write(mpd_data)
@@ -115,7 +137,7 @@ def id_generator(id_size=6):
 def download_segment(segment_url, dash_folder):
     """ Module to download the segment """
     try:
-        connection = urllib.request.urlopen(segment_url)
+        connection = http_connection
     except urllib.error.HTTPError as error:
         config_dash.LOG.error("Unable to download DASH Segment {} HTTP Error:{} ".format(segment_url, str(error.code)))
         return None
@@ -126,18 +148,13 @@ def download_segment(segment_url, dash_folder):
     segment_filename = os.path.join(dash_folder, os.path.basename(segment_path))
     make_sure_path_exists(os.path.dirname(segment_filename))
     segment_file_handle = open(segment_filename, 'wb')
-    segment_size = 0
-    while True:
-        segment_data = connection.read(DOWNLOAD_CHUNK)
-        segment_size += len(segment_data)
-        segment_file_handle.write(segment_data)
-        if len(segment_data) < DOWNLOAD_CHUNK:
-            break
-    connection.close()
+
+    segment_data = connection.read(segment_url)
+    segment_file_handle.write(segment_data)
     segment_file_handle.close()
     #print "segment size = {}".format(segment_size)
     #print "segment filename = {}".format(segment_filename)
-    return segment_size, segment_filename
+    return len(segment_data), segment_filename
 
 
 def get_media_all(domain, media_info, file_identifier, done_queue):
@@ -485,7 +502,7 @@ def start_playback_all(dp_object, domain):
 
 def create_arguments(parser):
     """ Adding arguments to the parser """
-    parser.add_argument('-m', '--MPD',                   
+    parser.add_argument('-m', '--MPD',
                         help="Url to the MPD File")
     parser.add_argument('-l', '--LIST', action='store_true',
                         help="List all the representations")
@@ -498,9 +515,13 @@ def create_arguments(parser):
     parser.add_argument('-d', '--DOWNLOAD', action='store_true',
                         default=False,
                         help="Keep the video files after playback")
+    parser.add_argument('-pro', '--PROTOCOL',
+                        default="h2",
+                        help="protocol[h2|h3]")
 
 
 def main():
+    global http_connection
     """ Main Program wrapper """
     # configure the log file
     # Create arguments
@@ -508,6 +529,8 @@ def main():
     create_arguments(parser)
     args = parser.parse_args()
     globals().update(vars(args))
+
+    http_connection = Connection(PROTOCOL)
     configure_log_file(playback_type=PLAYBACK.lower())
     config_dash.JSON_HANDLE['playback_type'] = PLAYBACK.lower()
     if not MPD:
