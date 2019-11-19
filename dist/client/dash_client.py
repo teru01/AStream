@@ -63,6 +63,7 @@ def get_mpd(url):
     """ Module to download the MPD from the URL and save it to file"""
     print(url)
     try:
+        # 毎回3whsしてる..
         connection = urllib.request.urlopen(url, timeout=10)
     except urllib.error.HTTPError as error:
         config_dash.LOG.error("Unable to download MPD file HTTP Error: %s" % error.code)

@@ -225,3 +225,7 @@ tools/
 
 *.mpd
 ASTREAM_LOGS
+dist/vendor/
+dist/dist
+dist/h3client.so
+dist/h3client.h
