@@ -69,7 +69,7 @@ class Connection:
         if proto == "h2":
             self.request = libh2.H2client
         elif proto == "h3":
-            self.request = libh3.h3client
+            self.request = libh3.H3client
         else:
             print("undefined protocol")
             sys.exit(0)
