@@ -50,7 +50,7 @@ JSON_HANDLE['playback_info'] = {'start_time': None,
                                 'down_shifts': 0
                                 }
 # Constants for the BASIC-2 adaptation scheme
-BASIC_THRESHOLD = 10
+BASIC_THRESHOLD = 6
 BASIC_UPPER_THRESHOLD = 1.2
 # Number of segments for moving average
 BASIC_DELTA_COUNT = 5
@@ -66,7 +66,7 @@ RE_BUFFERING_COUNT = 1
 ALPHA_BUFFER_COUNT = 5
 BETA_BUFFER_COUNT = 10
 # Set the size of the buffer in terms of segments. Set to unlimited if 0 or None
-MAX_BUFFER_SIZE = None
+MAX_BUFFER_SIZE = 3
 
 # ---------------------------------------------------
 # Netflix (Buffer-based) ADAPTATION
