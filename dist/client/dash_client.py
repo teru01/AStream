@@ -64,8 +64,8 @@ class DashPlayback:
 
 class Connection:
     def __init__(self, proto):
-        libh3 = cdll.LoadLibrary("./golang/h3client.so")
-        libh2 = cdll.LoadLibrary("./golang/h2client.so")
+        libh3 = cdll.LoadLibrary(os.path.join(os.path.dirname(__file__), "../golang/h3client.so"))
+        libh2 = cdll.LoadLibrary(os.path.join(os.path.dirname(__file__), "../golang/h2client.so"))
         if proto == "h2":
             self.request = libh2.H2client
         elif proto == "h3":
@@ -219,27 +219,27 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
     #     for i, d in dp_object.video.items():
     #         f.write("{}: {}\n".format(i, d))
     # Creating a Dictionary of all that has the URLs for each segment and different bitrates
-    for bitrate in dp_object.video:
-        # Getting the URL list for each bitrate
-        dp_object.video[bitrate] = read_mpd.get_url_list(dp_object.video[bitrate], video_segment_duration,
-                                                         dp_object.playback_duration, bitrate)
+    for layer_id in dp_object.video:
+        # Getting the URL list for each layer_id
+        dp_object.video[layer_id] = read_mpd.get_url_list(dp_object.video[layer_id], video_segment_duration,
+                                                         dp_object.playback_duration, layer_id)
 
-        if "$Bandwidth$" in dp_object.video[bitrate].initialization:
-            dp_object.video[bitrate].initialization = dp_object.video[bitrate].initialization.replace(
-                "$Bandwidth$", str(bitrate))
-        media_urls = [dp_object.video[bitrate].initialization] + dp_object.video[bitrate].url_list
+        if "$Bandwidth$" in dp_object.video[layer_id].initialization:
+            dp_object.video[layer_id].initialization = dp_object.video[layer_id].initialization.replace(
+                "$Bandwidth$", str(layer_id))
+        media_urls = [dp_object.video[layer_id].initialization] + dp_object.video[layer_id].url_list
         #print "media urls"
         # if mdShow:
         #     with open("md.txt", "w") as f:
         #         for i, m in enumerate(media_urls):
         #             f.write("{}: {}\n".format(i, m))
         #     mdShow = False
-        for segment_count, segment_url in enumerate(media_urls, dp_object.video[bitrate].start):
-            # segment_duration = dp_object.video[bitrate].segment_duration
+        for segment_count, segment_url in enumerate(media_urls, dp_object.video[layer_id].start):
+            # segment_duration = dp_object.video[layer_id].segment_duration
             #print "segment url"
             #print segment_url
             # print(segment_url)
-            dp_list[segment_count][bitrate] = segment_url
+            dp_list[segment_count][layer_id] = segment_url
     bitrates = list(dp_object.video.keys())
     bitrates.sort()
     average_dwn_time = 0

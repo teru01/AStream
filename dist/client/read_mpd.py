@@ -135,7 +135,7 @@ def read_mpd(mpd_file, dashplayback):
             config_dash.JSON_HANDLE["video_metadata"]['playback_duration'] = dashplayback.playback_duration
         if MIN_BUFFER_TIME in root.attrib:
             dashplayback.min_buffer_time = get_playback_time(root.attrib[MIN_BUFFER_TIME])
-    format = 0;
+    format = 0
     if "Period" in get_tag_name(root[0].tag):
         child_period = root[0]
         FORMAT = 0
@@ -188,8 +188,14 @@ def read_mpd(mpd_file, dashplayback):
     elif FORMAT == 1: #differentFormat
 
         for adaptation_set in child_period:
-            for representation in adaptation_set:
+            print(adaptation_set)
+            for z, representation in enumerate(adaptation_set):
                 media_found = False
+                if "SegmentBase" in representation.tag:
+                    # TODO: initファイルの配置を考慮
+                    continue
+                if z < 3:
+                    print(representation.attrib)
                 if 'audio' in representation.attrib['mimeType']:
                     media_object = dashplayback.audio
                     media_found = False
@@ -205,7 +211,8 @@ def read_mpd(mpd_file, dashplayback):
                 config_dash.JSON_HANDLE["video_metadata"]['available_bitrates'].append(bandwidth)
                 media_object[bandwidth] = MediaObject()
                 media_object[bandwidth].segment_sizes = []
-                media_object[bandwidth].start = int(representation.attrib['startWithSAP'])
+                # TODO: 必要なら変更
+                media_object[bandwidth].start = 1
                 media_object[bandwidth].base_url = root[0].text
                 tempcut_url = root[0].text.split('/',3)[2:]
                 cut_url = tempcut_url[1]
@@ -224,8 +231,8 @@ def read_mpd(mpd_file, dashplayback):
                                 if "SegmentURL" in get_tag_name(segment_URL.tag):
                                     try:
                                         Ssize = segment_URL.attrib['media'].split('/')[0]
-                                        Ssize = Ssize.split('_')[-1];
-                                        Ssize = Ssize.split('kbit')[0];
+                                        Ssize = Ssize.split('_')[-1]
+                                        Ssize = Ssize.split('kbit')[0]
                                         #print "ssize"
                                         #print Ssize
                                         segment_size = float(Ssize) * float(
