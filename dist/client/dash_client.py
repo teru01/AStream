@@ -215,31 +215,22 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
     file_identifier = id_generator()
     config_dash.LOG.info("The segments are stored in %s" % file_identifier)
     dp_list = defaultdict(defaultdict)
-    # with open("dp_obj.txt", "w") as f:
-    #     for i, d in dp_object.video.items():
-    #         f.write("{}: {}\n".format(i, d))
     # Creating a Dictionary of all that has the URLs for each segment and different bitrates
-    for bandwidth in dp_object.video:
-        # Getting the URL list for each bandwidth
-        dp_object.video[bandwidth] = read_mpd.get_url_list(dp_object.video[bandwidth], video_segment_duration,
-                                                         dp_object.playback_duration, bandwidth)
+    for bitrate in dp_object.video:
+        # Getting the URL list for each bitrate
+        dp_object.video[bitrate] = read_mpd.get_url_list(dp_object.video[bitrate], video_segment_duration,
+                                                         dp_object.playback_duration, bitrate)
 
-        if "$Bandwidth$" in dp_object.video[bandwidth].initialization:
-            dp_object.video[bandwidth].initialization = dp_object.video[bandwidth].initialization.replace(
-                "$Bandwidth$", str(bandwidth))
-        media_urls = [dp_object.video[bandwidth].initialization] + dp_object.video[bandwidth].url_list
-        #print "media urls"
-        # if mdShow:
-        #     with open("md.txt", "w") as f:
-        #         for i, m in enumerate(media_urls):
-        #             f.write("{}: {}\n".format(i, m))
-        #     mdShow = False
-        for segment_count, segment_url in enumerate(media_urls, dp_object.video[bandwidth].start):
-            # segment_duration = dp_object.video[bandwidth].segment_duration
+        if "$bitrate$" in dp_object.video[bitrate].initialization:
+            dp_object.video[bitrate].initialization = dp_object.video[bitrate].initialization.replace(
+                "$bitrate$", str(bitrate))
+        media_urls = [dp_object.video[bitrate].initialization] + dp_object.video[bitrate].url_list
+        for segment_count, segment_url in enumerate(media_urls, dp_object.video[bitrate].start):
+            # segment_duration = dp_object.video[bitrate].segment_duration
             #print "segment url"
             #print segment_url
             # print(segment_url)
-            dp_list[segment_count][bandwidth] = segment_url
+            dp_list[segment_count][bitrate] = segment_url
     bitrates = list(dp_object.video.keys())
     bitrates.sort()
     average_dwn_time = 0
@@ -345,6 +336,8 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
         #print "segment url"
         #print segment_url
         config_dash.LOG.info("{}: Segment URL = {}".format(playback_type.upper(), segment_url))
+
+        # バッファが閾値を超えてるなら待機する。
         if delay:
             delay_start = time.time()
             config_dash.LOG.info("SLEEPING for {}seconds ".format(delay*segment_duration))
