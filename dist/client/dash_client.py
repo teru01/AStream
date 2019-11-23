@@ -219,32 +219,32 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
     #     for i, d in dp_object.video.items():
     #         f.write("{}: {}\n".format(i, d))
     # Creating a Dictionary of all that has the URLs for each segment and different bitrates
-    for layer_id in dp_object.video:
-        # Getting the URL list for each layer_id
-        dp_object.video[layer_id] = read_mpd.get_url_list(dp_object.video[layer_id], video_segment_duration,
-                                                         dp_object.playback_duration, layer_id)
+    for bandwidth in dp_object.video:
+        # Getting the URL list for each bandwidth
+        dp_object.video[bandwidth] = read_mpd.get_url_list(dp_object.video[bandwidth], video_segment_duration,
+                                                         dp_object.playback_duration, bandwidth)
 
-        if "$Bandwidth$" in dp_object.video[layer_id].initialization:
-            dp_object.video[layer_id].initialization = dp_object.video[layer_id].initialization.replace(
-                "$Bandwidth$", str(layer_id))
-        media_urls = [dp_object.video[layer_id].initialization] + dp_object.video[layer_id].url_list
+        if "$Bandwidth$" in dp_object.video[bandwidth].initialization:
+            dp_object.video[bandwidth].initialization = dp_object.video[bandwidth].initialization.replace(
+                "$Bandwidth$", str(bandwidth))
+        media_urls = [dp_object.video[bandwidth].initialization] + dp_object.video[bandwidth].url_list
         #print "media urls"
         # if mdShow:
         #     with open("md.txt", "w") as f:
         #         for i, m in enumerate(media_urls):
         #             f.write("{}: {}\n".format(i, m))
         #     mdShow = False
-        for segment_count, segment_url in enumerate(media_urls, dp_object.video[layer_id].start):
-            # segment_duration = dp_object.video[layer_id].segment_duration
+        for segment_count, segment_url in enumerate(media_urls, dp_object.video[bandwidth].start):
+            # segment_duration = dp_object.video[bandwidth].segment_duration
             #print "segment url"
             #print segment_url
             # print(segment_url)
-            dp_list[segment_count][layer_id] = segment_url
+            dp_list[segment_count][bandwidth] = segment_url
     bitrates = list(dp_object.video.keys())
     bitrates.sort()
     average_dwn_time = 0
     segment_files = []
-    # with open("dp_list.txt", "w") as f:
+    # with open("dp_list_svc.txt", "w") as f:
     #     for i, d in dp_list.items():
     #         f.write("{}: {}\n".format(i, d))
     # For basic adaptation

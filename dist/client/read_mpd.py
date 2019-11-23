@@ -27,7 +27,7 @@ except ImportError:
 MEDIA_PRESENTATION_DURATION = 'mediaPresentationDuration'
 MIN_BUFFER_TIME = 'minBufferTime'
 
-BITRATE_MAP = {'45652': '50', '89283': '100', '131087': '150', '178351': '200', '221600': '250', '262537': '300', '334349': '400', '396126': '500', '522286': '600', '595491': '700', '791182': '900', '1032682': '1200', '1244778': '1500', '1546902': '2000', '2133691': '2500', '2484135': '3000', '3078587': '4000', '3526922': '5000', '3840360': '6000', '4219897': '8000'}
+BITRATE_MAP = {'912605': '0', '1574557': '16', '2602918': '32', '3847919': '48'}
 
 
 def get_tag_name(xml_element):
@@ -92,6 +92,7 @@ def get_url_list(media, segment_duration,  playback_duration, bitrate):
     """
     Module to get the List of URLs
     """
+    g_url_list = URL_LIST
     if FORMAT == 0:
     # Counting the init file
         total_playback = segment_duration
@@ -112,7 +113,7 @@ def get_url_list(media, segment_duration,  playback_duration, bitrate):
                 break
             total_playback += segment_duration
     elif FORMAT == 1:
-        media.url_list = list(filter(lambda url: True if url.split('/')[1].split('_')[2][:-4] == BITRATE_MAP[str(bitrate)] else False, URL_LIST))
+        media.url_list = list(filter(lambda url: True if url.split('.')[-2].endswith(BITRATE_MAP[str(bitrate)]) else False, g_url_list))
     #print media.url_list
     print("FORMAT: ", FORMAT)
     return media
@@ -189,10 +190,13 @@ def read_mpd(mpd_file, dashplayback):
 
         for adaptation_set in child_period:
             print(adaptation_set)
+            init_file = None
             for z, representation in enumerate(adaptation_set):
                 media_found = False
-                if "SegmentBase" in representation.tag:
+                if "SegmentBase" in get_tag_name(representation.tag):
                     # TODO: initファイルの配置を考慮
+                    for i in representation:
+                        init_file = i.attrib['sourceURL']
                     continue
                 if z < 3:
                     print(representation.attrib)
@@ -214,36 +218,34 @@ def read_mpd(mpd_file, dashplayback):
                 # TODO: 必要なら変更
                 media_object[bandwidth].start = 1
                 media_object[bandwidth].base_url = root[0].text
-                tempcut_url = root[0].text.split('/',3)[2:]
-                cut_url = tempcut_url[1]
+                tempcut_url = root[0].text.split('/')[-2:]
+                cut_url = '/'.join(tempcut_url)
+
                 print("cut_url = {}".format(cut_url))
+                media_object[bandwidth].initialization = cut_url + init_file
                 #print root[0].text
                 for segment_info in representation:
-                    if "SegmentBase" in get_tag_name(segment_info.tag):
-                        for init in segment_info:
-                            media_object[bandwidth].initialization = cut_url + init.attrib['sourceURL']
-
                     if 'video' in representation.attrib['mimeType']:
                         if "SegmentList" in get_tag_name(segment_info.tag):
                             video_segment_duration = (float(segment_info.attrib['duration']))
                             config_dash.LOG.debug("Segment Playback Duration = {}".format(video_segment_duration))
                             for segment_URL in segment_info:
                                 if "SegmentURL" in get_tag_name(segment_URL.tag):
-                                    try:
-                                        Ssize = segment_URL.attrib['media'].split('/')[0]
-                                        Ssize = Ssize.split('_')[-1]
-                                        Ssize = Ssize.split('kbit')[0]
-                                        #print "ssize"
-                                        #print Ssize
-                                        segment_size = float(Ssize) * float(
-                                            SIZE_DICT["Kbits"])
-                                    except KeyError as e:
-                                        config_dash.LOG.error("Error in reading Segment sizes :{}".format(e))
-                                        continue
+                                    # try:
+                                    #     # Ssize = segment_URL.attrib['media'].split('/')[0]
+                                    #     # Ssize = Ssize.split('_')[-1]
+                                    #     # Ssize = Ssize.split('kbit')[0]
+                                    #     # #print "ssize"
+                                    #     # #print Ssize
+                                    #     # segment_size = float(Ssize) * float(
+                                    #     #     SIZE_DICT["Kbits"])
+                                    # except KeyError as e:
+                                    #     config_dash.LOG.error("Error in reading Segment sizes :{}".format(e))
+                                    #     continue
                                     segurl = cut_url + segment_URL.attrib['media']
                                     #print segurl
                                     URL_LIST.append(segurl)
-                                    media_object[bandwidth].segment_sizes.append(segment_size)
+                                    #media_object[bandwidth].segment_sizes.append(segment_size) # bandwidthごとに200kbit, 400kbitなどが入る
 
 
 
