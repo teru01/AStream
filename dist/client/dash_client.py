@@ -267,12 +267,12 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
         print("segment_number ={}".format(segment_number))
         print("dp_object.video[bitrate].start={}".format(dp_object.video[bitrate].start))
 
-        state = 'INITIAL'
+        state = config_dash.SVC_STATE_INIT
         if segment_number == dp_object.video[bitrate].start:
             current_bitrate = bitrates[0]
         else:
             if playback_type.upper() == "SVC":
-                if state == 'INITIAL':
+                if state == config_dash.SVC_STATE_INIT:
                     bl_path = dp_list[segment][bitrates[0]]
                     segment_url = urllib.parse.urljoin(domain, bl_path)
                     config_dash.LOG.info("{}: BL URL = {}".format(playback_type.upper(), segment_url))
@@ -282,7 +282,10 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
                         current_bitrate, segment_number, video_segment_duration, dash_player)
                     segment_files.append(segment_filename)
 
-                elif state == 'STABLE':
+                    if dash_player.buffer.qsize() > config_dash.SVC_INITIAL_BUF:
+                        state = config_dash.SVC_STATE_STABLE
+
+                elif state == config_dash.SVC_STATE_STABLE:
                     bl_path = dp_list[segment][bitrates[0]]
                     segment_url = urllib.parse.urljoin(domain, bl_path)
                     config_dash.LOG.info("{}: BL URL = {}".format(playback_type.upper(), segment_url))

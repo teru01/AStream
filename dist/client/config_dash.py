@@ -59,6 +59,9 @@ BASIC_DELTA_COUNT = 5
 SVC_THRESHOLD = 40
 SVC_A = 14
 SVC_B = 7
+SVC_INITIAL_BUF = 7
+SVC_STATE_INIT = 0
+SVC_STATE_STABLE = 1
 
 # ---------------------------------------------------
 # SARA (Segment Aware Rate Adaptation)
