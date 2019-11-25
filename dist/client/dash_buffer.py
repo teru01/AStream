@@ -128,7 +128,7 @@ class DashPlayer:
                     config_dash.JSON_HANDLE['playback_info']['interruptions']['count'] += 1
                 # If the size of the buffer is greater than the RE_BUFFERING_DURATION then start playback
                 else:
-                    # If the RE_BUFFERING_DURATION is greate than the remiang length of the video then do not wait
+                    # If the RE_BUFFERING_DURATION is greater than the remaining length of the video then do not wait
                     remaining_playback_time = self.playback_duration - self.playback_timer.time()
                     if ((self.buffer.qsize() >= config_dash.RE_BUFFERING_COUNT) or (
                             config_dash.RE_BUFFERING_COUNT * self.segment_duration >= remaining_playback_time
