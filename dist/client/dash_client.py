@@ -253,6 +253,7 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
     average_segment_sizes = netflix_rate_map = None
     netflix_state = "INITIAL"
     # Start playback of all the segments
+    delay = 0
     for segment_number, segment in enumerate(dp_list, dp_object.video[current_bitrate].start):
         config_dash.LOG.info(" {}: Processing the segment {}".format(playback_type.upper(), segment_number))
         write_json()
@@ -288,19 +289,25 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
                 elif state == config_dash.SVC_STATE_STABLE:
                     bl_path = segment[bitrates[0]]
                     segment_url = urllib.parse.urljoin(domain, bl_path)
-                    config_dash.LOG.info("{}: BL URL = {}".format(playback_type.upper(), segment_url))
+                    config_dash.LOG.info("BL URL = {}".format(segment_url))
 
+                    # download base layer
                     segment_download_time, segment_filename, segment_size = download_wrapper(segment_url,
                         file_identifier, previous_segment_times, recent_download_sizes,
                         current_bitrate, segment_number, video_segment_duration, dash_player)
                     segment_files.append(segment_filename)
+
+                    if dash_player.buffer.qsize() > config_dash.SVC_THRESHOLD:
+                        delay = dash_player.buffer.qsize() - config_dash.SVC_THRESHOLD
+
                     max_safe_layer_id, _ = basic_dash2.basic_dash2("", bitrates, "", recent_download_sizes, segment_download_time, current_bitrate)
                     current_bitrate = bitrates[max_safe_layer_id]
+                    config_dash.LOG.info("current_bitrate: {}".format(current_bitrate))
 
                     current_playback_index = dash_player.playback_index
                     eh_head_ind = current_playback_index + 2
                     safe_region = False
-                    while segment_number + 1 < eh_head_ind < current_playback_index + config_dash.SVC_THRESHOLD:
+                    while dash_player.playback_index + 1 < eh_head_ind < current_playback_index + config_dash.SVC_THRESHOLD:
                         if dash_player.buffer.qsize() > config_dash.SVC_A:
                             safe_region = True
                         elif dash_player.buffer.qsize() < config_dash.SVC_B:
