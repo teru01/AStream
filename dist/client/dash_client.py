@@ -355,16 +355,16 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
     if not download:
         clean_files(file_identifier)
 
-def highest_received_layer(seg_number):
-    pass
-
+def highest_received_layer(seg_number, dash_player):
+    seg = dash_player.buffer.search_segment(seg_number)
+    return len(seg['data']) - 1
 
 # 評価に必要なもの: {'segment_no', 'max_layer: どの層までDLしたか'}
 # EL取得に必要なもの: {'current_throughput'}
-def download_wrapper(segment_url, 
-    file_identifier, 
-    previous_segment_times, 
-    recent_download_sizes, 
+def download_wrapper(segment_url,
+    file_identifier,
+    previous_segment_times,
+    recent_download_sizes,
     current_bitrate,
     segment_number,
     video_segment_duration,
@@ -406,7 +406,7 @@ def download_wrapper(segment_url,
     elif segment_type == config_dash.SVC_EH_LAYER:
         # キューから対応するセグメントを取り出し更新
         with dash_player.buffer_lock:
-            bl_segment = dash_player.buffer.search_bl(segment_number)
+            bl_segment = dash_player.buffer.search_segment(segment_number)
             if bl_segment == None:
                 config_dash.LOG.info('segnum: {} not found'.format(segment_number))
                 raise RuntimeError('segment is not available')

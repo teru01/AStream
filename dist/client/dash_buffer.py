@@ -19,7 +19,7 @@ class DashQueue(deque):
     def qsize(self):
         return len(self)
 
-    def search_bl(self, i):
+    def search_segment(self, i):
         for seg in self:
             if seg['segment_number'] == i:
                 return seg
