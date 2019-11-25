@@ -1,5 +1,5 @@
 
-import queue
+from collections import deque
 import threading
 import time
 import csv
@@ -12,6 +12,12 @@ PLAYER_STATES = ['INITIALIZED', 'INITIAL_BUFFERING', 'PLAY',
                  'PAUSE', 'BUFFERING', 'STOP', 'END']
 EXIT_STATES = ['STOP', 'END']
 
+class DashQueue(deque):
+    def __init__(self, iterable, maxlen):
+        super().__init__(iterable, maxlen)
+
+    def qsize(self):
+        return len(self)
 
 class DashPlayer:
     """ DASH buffer class """
@@ -47,7 +53,7 @@ class DashPlayer:
         self.beta = config_dash.BETA_BUFFER_COUNT
         self.segment_limit = None
         # Current video buffer that holds the segment data
-        self.buffer = queue.Queue()
+        self.buffer = DashQueue()
         self.buffer_lock = threading.Lock()
         self.current_segment = None
         self.buffer_log_file = config_dash.BUFFER_LOG_FILENAME
@@ -159,9 +165,8 @@ class DashPlayer:
                         continue
                     # Read one the segment from the buffer
                     # Acquire Lock on the buffer and read a segment for it
-                    self.buffer_lock.acquire()
-                    play_segment = self.buffer.get()
-                    self.buffer_lock.release()
+                    with self.buffer_lock:
+                        play_segment = self.buffer.get()
                     self.set_playback_index(play_segment['segment_number'])
                     config_dash.LOG.info("Reading the segment number {} from the buffer at playtime {}".format(
                         play_segment['segment_number'], self.playback_timer.time()))
@@ -188,11 +193,10 @@ class DashPlayer:
                             self.log_entry("TheEnd")
                             return
                     else:
-                        self.buffer_length_lock.acquire()
-                        self.buffer_length -= int(play_segment['playback_length'])
+                        with self.buffer_length_lock:
+                            self.buffer_length -= int(play_segment['playback_length'])
                         config_dash.LOG.debug("Decrementing buffer_length by {}. dash_buffer = {}".format(
                             play_segment['playback_length'], self.buffer_length))
-                        self.buffer_length_lock.release()
                     if self.segment_limit:
                         if int(play_segment['segment_number']) >= self.segment_limit:
                             self.set_state("STOP")
@@ -214,14 +218,12 @@ class DashPlayer:
             config_dash.JSON_HANDLE['playback_info']['start_time'] = self.actual_start_time
         config_dash.LOG.info("Writing segment {} at time {}".format(segment['segment_number'],
                                                                     time.time() - self.actual_start_time))
-        self.buffer_lock.acquire()
-        self.buffer.put(segment)
-        self.buffer_lock.release()
-        self.buffer_length_lock.acquire()
-        self.buffer_length += int(segment['playback_length'])
+        with self.buffer_lock:
+            self.buffer.put(segment)
+        with self.buffer_length_lock:
+            self.buffer_length += int(segment['playback_length'])
         config_dash.LOG.debug("Incrementing buffer_length by {}. dash_buffer = {}".format(
             segment['playback_length'], self.buffer_length))
-        self.buffer_length_lock.release()
         self.log_entry(action="Writing", bitrate=segment['bitrate'])
 
     def start(self):
