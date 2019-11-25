@@ -13,8 +13,8 @@ PLAYER_STATES = ['INITIALIZED', 'INITIAL_BUFFERING', 'PLAY',
 EXIT_STATES = ['STOP', 'END']
 
 class DashQueue(deque):
-    def __init__(self, iterable, maxlen):
-        super().__init__(iterable, maxlen)
+    def __init__(self):
+        super().__init__()
 
     def qsize(self):
         return len(self)
@@ -172,7 +172,7 @@ class DashPlayer:
                     # Read one the segment from the buffer
                     # Acquire Lock on the buffer and read a segment for it
                     with self.buffer_lock:
-                        play_segment = self.buffer.get()
+                        play_segment = self.buffer.popleft()
                     self.set_playback_index(play_segment['segment_number'])
                     config_dash.LOG.info("Reading the segment number {} from the buffer at playtime {}".format(
                         play_segment['segment_number'], self.playback_timer.time()))
@@ -225,7 +225,7 @@ class DashPlayer:
         config_dash.LOG.info("Writing segment {} at time {}".format(segment['segment_number'],
                                                                     time.time() - self.actual_start_time))
         with self.buffer_lock:
-            self.buffer.put(segment)
+            self.buffer.append(segment)
         with self.buffer_length_lock:
             self.buffer_length += int(segment['playback_length'])
         config_dash.LOG.debug("Incrementing buffer_length by {}. dash_buffer = {}".format(

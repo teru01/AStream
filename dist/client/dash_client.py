@@ -254,8 +254,10 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
     netflix_state = "INITIAL"
     # Start playback of all the segments
     delay = 0
-    for segment_number, segment in enumerate(dp_list, dp_object.video[current_bitrate].start):
-        config_dash.LOG.info(" {}: Processing the segment {}".format(playback_type.upper(), segment_number))
+    state = config_dash.SVC_STATE_INIT
+    for segment_number, segment in enumerate(dp_list.values(), dp_object.video[current_bitrate].start):
+        # dp_listは{int: dict}
+        config_dash.LOG.info("Processing the segment {} : {}".format(segment_number, segment))
         write_json()
         if not previous_bitrate:
             previous_bitrate = current_bitrate
@@ -265,10 +267,6 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
             if segment_number > int(SEGMENT_LIMIT):
                 config_dash.LOG.info("Segment limit reached")
                 break
-        print("segment_number ={}".format(segment_number))
-        print("dp_object.video[bitrate].start={}".format(dp_object.video[bitrate].start))
-
-        state = config_dash.SVC_STATE_INIT
         if segment_number == dp_object.video[bitrate].start:
             current_bitrate = bitrates[0]
         else:
@@ -280,16 +278,19 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
 
                     segment_download_time, segment_filename, segment_size = download_wrapper(segment_url,
                         file_identifier, previous_segment_times, recent_download_sizes,
-                        current_bitrate, segment_number, video_segment_duration, dash_player)
+                        current_bitrate, segment_number, video_segment_duration, dash_player, config_dash.SVC_BASE_LAYER)
                     segment_files.append(segment_filename)
+
+                    config_dash.LOG.info("qsize: {}".format(dash_player.buffer.qsize()))
 
                     if dash_player.buffer.qsize() > config_dash.SVC_INITIAL_BUF:
                         state = config_dash.SVC_STATE_STABLE
+                        config_dash.LOG.info('switching to SVC_STABLE')
 
                 elif state == config_dash.SVC_STATE_STABLE:
                     bl_path = segment[bitrates[0]]
                     segment_url = urllib.parse.urljoin(domain, bl_path)
-                    config_dash.LOG.info("BL URL = {}".format(segment_url))
+                    config_dash.LOG.info("seg URL = {}".format(segment_url))
 
                     # download base layer
                     segment_download_time, segment_filename, segment_size = download_wrapper(segment_url,
@@ -320,7 +321,7 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
 
                                 el_path = dp_list[eh_head_ind][bitrates[eh_head_layer_id+1]]
                                 segment_url = urllib.parse.urljoin(domain, el_path)
-
+                                config_dash.LOG.info("seg URL = {}".format(segment_url))
                                 try:
                                     segment_download_time, segment_filename, segment_size = download_wrapper(segment_url,
                                         file_identifier, previous_segment_times, recent_download_sizes,
@@ -566,6 +567,9 @@ def main():
         if mpd_file:
             config_dash.LOG.critical("Start ALL Parallel PLayback")
             start_playback_all(dp_object, domain)
+    elif "svc" in PLAYBACK.lower():
+        config_dash.LOG.critical("Started Basic-DASH Playback")
+        start_playback_smart(dp_object, domain, "SVC", DOWNLOAD, video_segment_duration)
     elif "basic" in PLAYBACK.lower():
         config_dash.LOG.critical("Started Basic-DASH Playback")
         start_playback_smart(dp_object, domain, "BASIC", DOWNLOAD, video_segment_duration)
