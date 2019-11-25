@@ -301,19 +301,21 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
                     if dash_player.buffer.qsize() > config_dash.SVC_THRESHOLD:
                         delay = dash_player.buffer.qsize() - config_dash.SVC_THRESHOLD
 
-                    max_safe_layer_id, _ = basic_dash2.basic_dash2("", bitrates, "", recent_download_sizes, segment_download_time, current_bitrate)
+                    max_safe_layer_id, _ = basic_dash2.basic_dash2("", bitrates, "", recent_download_sizes, previous_segment_times, current_bitrate)
                     current_bitrate = bitrates[max_safe_layer_id]
                     config_dash.LOG.info("current_bitrate: {}".format(current_bitrate))
 
                     current_playback_index = dash_player.playback_index
                     eh_head_ind = current_playback_index + 2
                     safe_region = False
-                    while dash_player.playback_index + 1 < eh_head_ind < current_playback_index + config_dash.SVC_THRESHOLD:
+                    while dash_player.playback_index + 1 < eh_head_ind <= segment_number:
                         if dash_player.buffer.qsize() > config_dash.SVC_A:
                             safe_region = True
                         elif dash_player.buffer.qsize() < config_dash.SVC_B:
                             safe_region = False
-                        eh_head_layer_id = highest_received_layer(eh_head_ind)
+                        
+                        config_dash.LOG.info("call highest recv layer: cur_p_i: {}, eh_head: {}".format(current_playback_index, eh_head_ind))
+                        eh_head_layer_id = highest_received_layer(eh_head_ind, dash_player)
                         if eh_head_layer_id < len(bitrates)-1:
                             # 最高レイヤーでないならELをDL
                             if bitrates[max_safe_layer_id] >= bitrates[eh_head_layer_id + 1] \
@@ -326,7 +328,7 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
                                     segment_download_time, segment_filename, segment_size = download_wrapper(segment_url,
                                         file_identifier, previous_segment_times, recent_download_sizes,
                                         current_bitrate, eh_head_ind, video_segment_duration, dash_player, config_dash.SVC_EH_LAYER)
-                                    max_safe_layer_id, _ = basic_dash2.basic_dash2("", bitrates, "", recent_download_sizes, segment_download_time, current_bitrate)
+                                    max_safe_layer_id, _ = basic_dash2.basic_dash2("", bitrates, "", recent_download_sizes, previous_segment_times, current_bitrate)
                                     current_bitrate = bitrates[max_safe_layer_id]
                                 except RuntimeError as e:
                                     # キューへの挿入ができなかった
@@ -343,11 +345,11 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
         # バッファが閾値を超えてるなら待機する。
         if delay:
             delay_start = time.time()
-            config_dash.LOG.info("SLEEPING for {}seconds ".format(delay*segment_duration))
-            while time.time() - delay_start < (delay * segment_duration):
+            config_dash.LOG.info("SLEEPING for {} seconds ".format(delay*video_segment_duration))
+            while time.time() - delay_start < (delay * video_segment_duration):
                 time.sleep(1)
             delay = 0
-            config_dash.LOG.debug("SLEPT for {}seconds ".format(time.time() - delay_start))
+            config_dash.LOG.debug("SLEPT for {} seconds ".format(time.time() - delay_start))
 
     # waiting for the player to finish playing
     while dash_player.playback_state not in dash_buffer.EXIT_STATES:
@@ -358,6 +360,8 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
 
 def highest_received_layer(seg_number, dash_player):
     seg = dash_player.buffer.search_segment(seg_number)
+    # if seg == None:
+
     return len(seg['data']) - 1
 
 # 評価に必要なもの: {'segment_no', 'max_layer: どの層までDLしたか'}
