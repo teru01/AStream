@@ -63,6 +63,9 @@ SVC_INITIAL_BUF = 7
 SVC_STATE_INIT = 0
 SVC_STATE_STABLE = 1
 
+SVC_BASE_LAYER = 0
+SVC_EH_LAYER = 1
+
 # ---------------------------------------------------
 # SARA (Segment Aware Rate Adaptation)
 # ---------------------------------------------------

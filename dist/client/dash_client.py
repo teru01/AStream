@@ -294,7 +294,7 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
                     # download base layer
                     segment_download_time, segment_filename, segment_size = download_wrapper(segment_url,
                         file_identifier, previous_segment_times, recent_download_sizes,
-                        current_bitrate, segment_number, video_segment_duration, dash_player)
+                        current_bitrate, segment_number, video_segment_duration, dash_player, config_dash.SVC_BASE_LAYER)
                     segment_files.append(segment_filename)
 
                     if dash_player.buffer.qsize() > config_dash.SVC_THRESHOLD:
@@ -320,11 +320,17 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
 
                                 el_path = dp_list[eh_head_ind][bitrates[eh_head_layer_id+1]]
                                 segment_url = urllib.parse.urljoin(domain, el_path)
-                                segment_download_time, segment_filename, segment_size = download_wrapper(segment_url,
-                                    file_identifier, previous_segment_times, recent_download_sizes,
-                                    current_bitrate, eh_head_ind, video_segment_duration, dash_player)
-                                max_safe_layer_id, _ = basic_dash2.basic_dash2("", bitrates, "", recent_download_sizes, segment_download_time, current_bitrate)
-                                current_bitrate = bitrates[max_safe_layer_id]
+
+                                try:
+                                    segment_download_time, segment_filename, segment_size = download_wrapper(segment_url,
+                                        file_identifier, previous_segment_times, recent_download_sizes,
+                                        current_bitrate, eh_head_ind, video_segment_duration, dash_player, config_dash.SVC_EH_LAYER)
+                                    max_safe_layer_id, _ = basic_dash2.basic_dash2("", bitrates, "", recent_download_sizes, segment_download_time, current_bitrate)
+                                    current_bitrate = bitrates[max_safe_layer_id]
+                                except RuntimeError as e:
+                                    # キューへの挿入ができなかった
+                                    pass
+                                    # config_dash.LOG.warning("")
 
                         eh_head_ind += 1
 
@@ -363,6 +369,7 @@ def download_wrapper(segment_url,
     segment_number,
     video_segment_duration,
     dash_player,
+    segment_type,
     ):
     # DLと統計情報の更新、
     # return: download time
@@ -383,16 +390,31 @@ def download_wrapper(segment_url,
     config_dash.JSON_HANDLE["segment_info"].append((segment_name, current_bitrate, segment_size,
                                                     segment_download_time))
     config_dash.LOG.info("segment_size = {}, segment_number = {}".format(segment_size, segment_number))
-    segment_info = {'playback_length': video_segment_duration,
-                    'size': segment_size,
-                    'layer': current_bitrate,
-                    'data': segment_filename,
-                    'URI': segment_url,
-                    'segment_number': segment_number}
-    segment_duration = segment_info['playback_length']
-    dash_player.write(segment_info)
-    config_dash.LOG.info("Downloaded %s. Size = %s in %s seconds" % (
-        segment_url, segment_size, str(segment_download_time)))
+
+    if segment_type == config_dash.SVC_BASE_LAYER:
+        # キューの末尾に追加
+        segment_info = {'playback_length': video_segment_duration,
+                        'size': [segment_size],
+                        'bitrate': [current_bitrate],
+                        'data': [segment_filename],
+                        'URI': [segment_url],
+                        'segment_number': segment_number}
+        segment_duration = segment_info['playback_length']
+        dash_player.write(segment_info)
+        config_dash.LOG.info("Downloaded %s. Size = %s in %s seconds" % (
+            segment_url, segment_size, str(segment_download_time)))
+    elif segment_type == config_dash.SVC_EH_LAYER:
+        # キューから対応するセグメントを取り出し更新
+        with dash_player.buffer_lock:
+            bl_segment = dash_player.buffer.search_bl(segment_number)
+            if bl_segment == None:
+                config_dash.LOG.info('segnum: {} not found'.format(segment_number))
+                raise RuntimeError('segment is not available')
+            bl_segment['size'].append(segment_size)
+            bl_segment['bitrate'].append(current_bitrate)
+            bl_segment['data'].append(segment_filename)
+            bl_segment['URI'].append(segment_url)
+
     return segment_download_time, segment_filename, segment_size
 
 def get_segment_sizes(dp_object, segment_number):

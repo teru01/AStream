@@ -19,6 +19,12 @@ class DashQueue(deque):
     def qsize(self):
         return len(self)
 
+    def search_bl(self, i):
+        for seg in self:
+            if seg['segment_number'] == i:
+                return seg
+        return None
+
 class DashPlayer:
     """ DASH buffer class """
     def __init__(self, video_length, segment_duration):
