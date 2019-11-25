@@ -227,7 +227,7 @@ def read_mpd(mpd_file, dashplayback):
                 for segment_info in representation:
                     if 'video' in representation.attrib['mimeType']:
                         if "SegmentList" in get_tag_name(segment_info.tag):
-                            video_segment_duration = (float(segment_info.attrib['duration']))
+                            video_segment_duration = (float(segment_info.attrib['duration']) / float(segment_info.attrib['timescale']))
                             config_dash.LOG.debug("Segment Playback Duration = {}".format(video_segment_duration))
                             for segment_URL in segment_info:
                                 if "SegmentURL" in get_tag_name(segment_URL.tag):
