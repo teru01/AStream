@@ -37,6 +37,10 @@ class DashPlayer:
         # Duration of the current buffer
         self.buffer_length = 0
         self.buffer_length_lock = threading.Lock()
+
+        # current playback index
+        self.playback_index = 1
+        self.playback_index_lock = threading.Lock()
         # Buffer Constants
         self.initial_buffer = config_dash.INITIAL_BUFFERING_COUNT
         self.alpha = config_dash.ALPHA_BUFFER_COUNT
@@ -158,6 +162,7 @@ class DashPlayer:
                     self.buffer_lock.acquire()
                     play_segment = self.buffer.get()
                     self.buffer_lock.release()
+                    self.set_playback_index(play_segment['segment_number'])
                     config_dash.LOG.info("Reading the segment number {} from the buffer at playtime {}".format(
                         play_segment['segment_number'], self.playback_timer.time()))
                     self.log_entry(action="StillPlaying", bitrate=play_segment["bitrate"])
@@ -193,6 +198,11 @@ class DashPlayer:
                             self.set_state("STOP")
                             config_dash.LOG.info("Stopped playback after segment {} at playtime {}".format(
                                 play_segment['segment_number'], self.playback_duration))
+
+    def set_playback_index(self, index):
+        self.playback_index_lock.acquire()
+        self.playback_index = index
+        self.playback_index_lock.release()
 
     def write(self, segment):
         """ write segment to the buffer.

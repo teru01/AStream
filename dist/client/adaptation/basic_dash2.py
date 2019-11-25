@@ -57,4 +57,4 @@ def basic_dash2(segment_number, bitrates, average_dwn_time,
                 next_rate = bitrates[index - 1]
                 break
     config_dash.LOG.info("Basic Adaptation: Download Rate = {}, next_bitrate = {}".format(download_rate, next_rate))
-    return next_rate, updated_dwn_time
+    return bitrates.index(next_rate), updated_dwn_time
