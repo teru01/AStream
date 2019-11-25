@@ -294,30 +294,32 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
                         file_identifier, previous_segment_times, recent_download_sizes,
                         current_bitrate, segment_number, video_segment_duration, dash_player)
                     segment_files.append(segment_filename)
-                    rep_id, _ = basic_dash2.basic_dash2("", bitrates, "", recent_download_sizes, segment_download_time, current_bitrate)
-                    current_bitrate = bitrates[rep_id]
+                    max_safe_layer_id, _ = basic_dash2.basic_dash2("", bitrates, "", recent_download_sizes, segment_download_time, current_bitrate)
+                    current_bitrate = bitrates[max_safe_layer_id]
 
-                    inc_quality_id = segment_number + 2
+                    current_playback_index = dash_player.playback_index
+                    eh_head_ind = current_playback_index + 2
                     safe_region = False
-                    while segment_number + 1 < inc_quality_id < segment_number + config_dash.SVC_THRESHOLD:
+                    while segment_number + 1 < eh_head_ind < current_playback_index + config_dash.SVC_THRESHOLD:
                         if dash_player.buffer.qsize() > config_dash.SVC_A:
                             safe_region = True
                         elif dash_player.buffer.qsize() < config_dash.SVC_B:
                             safe_region = False
-                        target_layer_id = highest_received_layer(inc_quality_id)
-                        if target_layer_id < len(bitrates)-1:
+                        eh_head_layer_id = highest_received_layer(eh_head_ind)
+                        if eh_head_layer_id < len(bitrates)-1:
                             # 最高レイヤーでないならELをDL
-                            if bitrates[rep_id] >= bitrates[target_layer_id + 1] \
-                                or (safe_region and bitrates[max(rep_id+1, len(bitrates)-1)] >= bitrates[target_layer_id+1]):
-                                el_path = dp_list[inc_quality_id][bitrates[rep_id]]
+                            if bitrates[max_safe_layer_id] >= bitrates[eh_head_layer_id + 1] \
+                                or (safe_region and bitrates[max(max_safe_layer_id+1, len(bitrates)-1)] >= bitrates[eh_head_layer_id+1]):
+
+                                el_path = dp_list[eh_head_ind][bitrates[eh_head_layer_id+1]]
                                 segment_url = urllib.parse.urljoin(domain, el_path)
                                 segment_download_time, segment_filename, segment_size = download_wrapper(segment_url,
                                     file_identifier, previous_segment_times, recent_download_sizes,
-                                    current_bitrate, inc_quality_id, video_segment_duration, dash_player)
-                                rep_id, _ = basic_dash2.basic_dash2("", bitrates, "", recent_download_sizes, segment_download_time, current_bitrate)
-                                current_bitrate = bitrates[rep_id]
+                                    current_bitrate, eh_head_ind, video_segment_duration, dash_player)
+                                max_safe_layer_id, _ = basic_dash2.basic_dash2("", bitrates, "", recent_download_sizes, segment_download_time, current_bitrate)
+                                current_bitrate = bitrates[max_safe_layer_id]
 
-                        inc_quality_id += 1
+                        eh_head_ind += 1
 
             else:
                 config_dash.LOG.error("Unknown playback type:{}. Continuing with basic playback".format(playback_type))
@@ -341,6 +343,7 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
         clean_files(file_identifier)
 
 def highest_received_layer(seg_number):
+    pass
 
 
 # 評価に必要なもの: {'segment_no', 'max_layer: どの層までDLしたか'}
