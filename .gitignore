@@ -229,4 +229,6 @@ dist/golang/vendor/
 dist/golang/dist
 dist/golang/h3client.so
 dist/golang/h3client.h
+dist/golang/h2client.h
+dist/golang/h2client.so
 TEMP_*

@@ -12,15 +12,17 @@ import (
 	"unsafe"
 )
 
-var client http.Client
+var client *http.Client
 
 func h2client(addr string) []byte {
-	client = http.Client{
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: true,
+	if client == nil {
+		client = &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{
+					InsecureSkipVerify: true,
+				},
 			},
-		},
+		}
 	}
 	fmt.Printf("golang: GET %s\n", addr)
 	resp, err := client.Get(addr)
