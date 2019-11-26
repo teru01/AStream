@@ -7,11 +7,11 @@ pro = sys.argv[1]
 if pro == "h3":
     lib = cdll.LoadLibrary("./h3client.so")
     client = lib.H3client
-    url = "https://Mteru.local:6666/index.html"
+    url = "https://dash.localdomain:6666/index.html"
 elif pro == "h2":
     lib = cdll.LoadLibrary("./h2client.so")
     client = lib.H2client
-    url = "https://Mteru.local:4443/index.html"
+    url = "https://dash.localdomain:4443/index.html"
 else:
     print("specify h2 or h3")
     exit(-1)
