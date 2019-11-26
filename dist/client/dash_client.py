@@ -396,6 +396,16 @@ def download_wrapper(segment_url,
                                                     segment_download_time))
     config_dash.LOG.info("segment_size = {}, segment_number = {}".format(segment_size, segment_number))
 
+    with open(config_dash.BUFFER_ANIME_FILENAME, 'a') as f_anime:
+        layer = segment_filename.split('.')[-2][-2:]
+        if layer == 'L0':
+            f_anime.write(f"{segment_number-1} 0\n")
+        elif layer == '16':
+            f_anime.write(f"{segment_number-1} 1\n")
+        elif layer == '32':
+            f_anime.write(f"{segment_number-1} 2\n")
+        elif layer == '48':
+            f_anime.write(f"{segment_number-1} 3\n")
     if segment_type == config_dash.SVC_BASE_LAYER:
         # キューの末尾に追加
         segment_info = {'playback_length': video_segment_duration,
