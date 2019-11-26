@@ -313,7 +313,6 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
                             safe_region = True
                         elif dash_player.buffer.qsize() < config_dash.SVC_B:
                             safe_region = False
-                        
                         config_dash.LOG.info("call highest recv layer: cur_p_i: {}, eh_head: {}".format(current_playback_index, eh_head_ind))
                         eh_head_layer_id = highest_received_layer(eh_head_ind, dash_player)
                         if eh_head_layer_id < len(bitrates)-1:
