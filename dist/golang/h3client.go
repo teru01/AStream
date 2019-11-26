@@ -14,7 +14,7 @@ import (
 	"github.com/lucas-clemente/quic-go/http3"
 )
 
-var hclient http.Client
+var hclient *http.Client
 
 func h3client(addr string) []byte {
 	pool, err := x509.SystemCertPool()
@@ -28,8 +28,10 @@ func h3client(addr string) []byte {
 			InsecureSkipVerify: true,
 		},
 	}
-	hclient = http.Client{
-		Transport: roundTripper,
+	if hclient == nil {
+		hclient = &http.Client{
+			Transport: roundTripper,
+		}
 	}
 	fmt.Printf("golang: GET %s\n", addr)
 	rsp, err := hclient.Get(addr) // 以前のコネクションを使いまわしたい
