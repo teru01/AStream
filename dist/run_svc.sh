@@ -1,7 +1,30 @@
+#!/bin/bash
+ 
+set -eux
+
 SCRIPT_DIR=$(cd $(dirname $0); pwd)
 
-if [ $1 = "h3" ]; then
-    python3 ${SCRIPT_DIR}/main.py --MPD https://dash.localdomain:6666/720p/BBB-I-720p_short.mpd -p svc -pro h3
-else
-    python3 ${SCRIPT_DIR}/main.py --MPD https://dash.localdomain:4443/720p/BBB-I-720p_short.mpd -p svc
-fi
+PROTOCOL=""
+PORT="4443"
+IP="dash.localdomain"
+
+while getopts "p:i:" optKey; do
+    case "$optKey" in
+        p)
+            if [ ${OPTARG} = "h3" ]; then
+                PROTOCOL="-pro h3"
+                PORT="6666"
+            fi
+            ;;
+        i)
+            IP=${OPTARG}
+            ;;
+
+        *)
+            ;;
+    esac
+done
+
+python3 ${SCRIPT_DIR}/main.py --MPD https://${IP}:${PORT}/720p/BBB-I-720p_short.mpd -p svc ${PROTOCOL}
+
+
