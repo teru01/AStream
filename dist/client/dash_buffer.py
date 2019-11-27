@@ -159,7 +159,7 @@ class DashPlayer:
 
             if self.playback_state == "PLAY":
                     # Check of the buffer has any segments
-                    if self.playback_timer.time() == self.playback_duration:
+                    if self.playback_timer.time() >= self.playback_duration:
                         self.set_state("END")
                         self.log_entry("Play-End")
                     if self.buffer.qsize() == 0:
