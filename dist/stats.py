@@ -34,6 +34,22 @@ def calc_bufratio(log_dict):
     total_stall_duration = log_dict['playback_info']['interruptions']['total_duration']
     return total_stall_duration / (play_duration + total_stall_duration)
 
+def print_layer(log_dict):
+    n = log_dict['segment_number']
+    layer_of_segments = parse_maximum_layer(log_dict, n)
+    for h in reversed(range(4)):
+        for layer in layer_of_segments:
+            if layer >= h:
+                print('#', end="")
+            else:
+                print(' ', end="")
+        print("\n", end="")
+    for i in range(n):
+        if i % 10 == 0:
+            print('.', end="")
+        else:
+            print(' ', end="")
+    print("\n", end="")
 
 def main():
     current_dir = os.path.dirname(__file__)
@@ -53,6 +69,7 @@ def main():
 
     print("bufratio: ", calc_bufratio(log_dict))
     print("average ssim: ", calc_average_ssim(log_dict, ssim_dict))
+    print_layer(log_dict)
 
 if __name__ == "__main__":
     main()
