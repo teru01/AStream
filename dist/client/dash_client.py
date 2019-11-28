@@ -216,10 +216,11 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
     config_dash.LOG.info("The segments are stored in %s" % file_identifier)
     dp_list = defaultdict(defaultdict)
     # Creating a Dictionary of all that has the URLs for each segment and different bitrates
+    bitrate_map = {str(v): str(k) for k, v in enumerate(sorted(map(int, dp_object.video.keys())))}
     for bitrate in dp_object.video:
         # Getting the URL list for each bitrate
         dp_object.video[bitrate] = read_mpd.get_url_list(dp_object.video[bitrate], video_segment_duration,
-                                                         dp_object.playback_duration, bitrate)
+                                                         dp_object.playback_duration, bitrate, bitrate_map)
 
         if "$bitrate$" in dp_object.video[bitrate].initialization:
             dp_object.video[bitrate].initialization = dp_object.video[bitrate].initialization.replace(
@@ -531,17 +532,16 @@ def create_arguments(parser):
     """ Adding arguments to the parser """
     parser.add_argument('-m', '--MPD',
                         help="Url to the MPD File")
-    parser.add_argument('-l', '--LIST', action='store_true',
-                        help="List all the representations")
+    parser.add_argument('-l', '--LOSS',
+                        help="packet loss")
     parser.add_argument('-p', '--PLAYBACK',
                         default=DEFAULT_PLAYBACK,
                         help="Playback type (basic, sara, netflix, or all)")
     parser.add_argument('-n', '--SEGMENT_LIMIT',
                         default=SEGMENT_LIMIT,
                         help="The Segment number limit")
-    parser.add_argument('-d', '--DOWNLOAD', action='store_true',
-                        default=False,
-                        help="Keep the video files after playback")
+    parser.add_argument('-d', '--DELAY', help="delay")
+    parser.add_argument('-b', '--BANDWIDTH', help="bandwidth")
     parser.add_argument('-pro', '--PROTOCOL',
                         default="h2",
                         help="protocol[h2|h3]")
@@ -560,6 +560,10 @@ def main():
     http_connection = Connection(PROTOCOL)
     configure_log_file(playback_type=PLAYBACK.lower())
     config_dash.JSON_HANDLE['playback_type'] = PLAYBACK.lower()
+    config_dash.JSON_HANDLE['loss'] = args.LOSS
+    config_dash.JSON_HANDLE['delay'] = args.DELAY
+    config_dash.JSON_HANDLE['bandwidth'] = args.BANDWIDTH
+    
     if not MPD:
         print("ERROR: Please provide the URL to the MPD file. Try Again..")
         return None

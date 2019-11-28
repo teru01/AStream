@@ -27,9 +27,6 @@ except ImportError:
 MEDIA_PRESENTATION_DURATION = 'mediaPresentationDuration'
 MIN_BUFFER_TIME = 'minBufferTime'
 
-BITRATE_MAP = {'912605': '0', '1574557': '16', '2602918': '32', '3847919': '48'}
-
-
 def get_tag_name(xml_element):
     """ Module to remove the xmlns tag from the name
         eg: '{urn:mpeg:dash:schema:mpd:2011}SegmentTemplate'
@@ -88,7 +85,7 @@ class DashPlayback:
         self.video = dict()
 
 
-def get_url_list(media, segment_duration,  playback_duration, bitrate):
+def get_url_list(media, segment_duration,  playback_duration, bitrate, bitrate_map):
     """
     Module to get the List of URLs
     """
@@ -113,7 +110,7 @@ def get_url_list(media, segment_duration,  playback_duration, bitrate):
                 break
             total_playback += segment_duration
     elif FORMAT == 1:
-        media.url_list = list(filter(lambda url: True if url.split('.')[-2].endswith(BITRATE_MAP[str(bitrate)]) else False, g_url_list))
+        media.url_list = list(filter(lambda url: True if url.split('.')[-2].endswith(bitrate_map[str(bitrate)]) else False, g_url_list))
     #print media.url_list
     print("FORMAT: ", FORMAT)
     return media
