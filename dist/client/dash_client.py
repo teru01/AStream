@@ -235,6 +235,7 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
     bitrates.sort()
     average_dwn_time = 0
     segment_files = []
+    config_dash.JSON_HANDLE['segment_number'] = len(dp_list) - 1
     # with open("dp_list_svc.txt", "w") as f:
     #     for i, d in dp_list.items():
     #         f.write("{}: {}\n".format(i, d))
