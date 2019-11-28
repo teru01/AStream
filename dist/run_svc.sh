@@ -8,7 +8,7 @@ PROTOCOL=""
 PORT="4443"
 IP="dash.localdomain"
 
-while getopts "p:i:" optKey; do
+while getopts "p:i:b:d:l:" optKey; do
     case "$optKey" in
         p)
             if [ ${OPTARG} = "h3" ]; then
@@ -19,12 +19,24 @@ while getopts "p:i:" optKey; do
         i)
             IP=${OPTARG}
             ;;
+        
+        b)
+            BW=${OPTARG}
+            ;;
+        
+        d)
+            DELAY=${OPTARG}
+            ;;
+        
+        l)
+            LOSS=${OPTARG}
+            ;;
 
         *)
             ;;
     esac
 done
 
-python3 ${SCRIPT_DIR}/main.py --MPD https://${IP}:${PORT}/720p/BBB-I-720p_short.mpd -p svc ${PROTOCOL}
+python3 ${SCRIPT_DIR}/main.py --MPD https://${IP}:${PORT}/720p/BBB-I-720p_short.mpd -p svc ${PROTOCOL} -b ${BW} -d ${DELAY} -l ${LOSS}
 
 

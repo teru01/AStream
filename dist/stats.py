@@ -17,7 +17,7 @@ def parse_maximum_layer(log_dict, n):
     for segment in log_dict['segment_info']:
         _, _, seg, lay = segment[0].split('-')
         seg_ind = int(seg.split('.')[-1][3:])
-        layer = int(lay.split('.')[0][1:]) // 16
+        layer = int(lay.split('.')[0][1:])
         layer_of_segments[seg_ind] = max(layer_of_segments[seg_ind], layer)
     return layer_of_segments
 
