@@ -162,6 +162,7 @@ class DashPlayer:
                     if self.playback_timer.time() >= self.playback_duration:
                         self.set_state("END")
                         self.log_entry("Play-End")
+                        continue
                     if self.buffer.qsize() == 0:
                         config_dash.LOG.info("Buffer empty after {} seconds of playback".format(
                             self.playback_timer.time()))
