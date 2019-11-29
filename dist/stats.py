@@ -66,18 +66,21 @@ def generate_stat(logFile, ssimFile):
         with open(ssimFile, 'r') as f_ssim:
             ssim_dict = json.loads(f_ssim.readline())
 
-        with open('{}./results/result_{}'.format(current_dir, logFile.split('/')[2].replace('json', 'txt')), 'w') as f_result:
+        with open('{}/results/result_{}'.format(current_dir, logFile.split('/')[-1].replace('json', 'txt')), 'w') as f_result:
             f_result.write('proto: {} loss: {} delay: {} bw: {}\n'.format(log_dict['protocol'], log_dict['loss'], log_dict['delay'], log_dict['bandwidth']))
             f_result.write("bufratio: {}\n".format(calc_bufratio(log_dict)))
             f_result.write("average ssim: {}\n".format(calc_average_ssim(log_dict, ssim_dict)))
             f_result.write(make_layer_str(log_dict))
 
 
-current_dir = os.path.dirname(__file__)
+current_dir = os.path.dirname(os.path.abspath(__file__))
 
 def main():
-    logfiles = sorted(glob.glob(current_dir + "./ASTREAM_LOGS/ASTREAM_*"))
-    ssimfiles = sorted(glob.glob(current_dir + "./ssims/ssim_*"))
+    logfiles = sorted(glob.glob(current_dir + "/ASTREAM_LOGS/ASTREAM_*"))
+    ssimfiles = sorted(glob.glob(current_dir + "/ssims/ssim_*"))
+    print(logfiles[-1])
+    print(current_dir)
+    print(ssimfiles[-1])
     args = get_option(logfiles[-1], ssimfiles[-1], 1)
     generate_stat(args.logFile, args.ssimFile)
 
