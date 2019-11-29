@@ -563,6 +563,7 @@ def main():
     config_dash.JSON_HANDLE['loss'] = args.LOSS
     config_dash.JSON_HANDLE['delay'] = args.DELAY
     config_dash.JSON_HANDLE['bandwidth'] = args.BANDWIDTH
+    config_dash.JSON_HANDLE['protocol'] = args.PROTOCOL
     
     if not MPD:
         print("ERROR: Please provide the URL to the MPD file. Try Again..")
