@@ -1,5 +1,42 @@
-if [ $1 = "h3" ]; then
-    python3 main.py --MPD https://dash.localdomain:6666/bunny_2s/bbb_single.mpd -p basic -pro h3
-else
-    python3 main.py --MPD https://dash.localdomain:4443/bunny_2s/bbb_single.mpd -p basic
-fi
+#!/bin/bash
+ 
+set -eux
+
+SCRIPT_DIR=$(cd $(dirname $0); pwd)
+
+PROTOCOL=""
+PORT="4443"
+IP="dash.localdomain"
+
+while getopts "p:i:b:d:l:" optKey; do
+    case "$optKey" in
+        p)
+            if [ ${OPTARG} = "h3" ]; then
+                PROTOCOL="-pro h3"
+                PORT="6666"
+            fi
+            ;;
+        i)
+            IP=${OPTARG}
+            ;;
+        
+        b)
+            BW=${OPTARG}
+            ;;
+        
+        d)
+            DELAY=${OPTARG}
+            ;;
+        
+        l)
+            LOSS=${OPTARG}
+            ;;
+
+        *)
+            ;;
+    esac
+done
+
+python3 ${SCRIPT_DIR}/main.py --MPD https://${IP}:${PORT}/bunny_2s/bbb.mpd ${PROTOCOL} -b ${BW} -d ${DELAY} -l ${LOSS}
+
+
