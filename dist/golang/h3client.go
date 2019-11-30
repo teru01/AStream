@@ -4,7 +4,6 @@ import "C"
 import (
 	"bytes"
 	"crypto/tls"
-	"crypto/x509"
 	"encoding/binary"
 	"fmt"
 	"io"
@@ -17,20 +16,13 @@ import (
 var hclient *http.Client
 
 func h3client(addr string) []byte {
-	pool, err := x509.SystemCertPool()
-	if err != nil {
-		panic(err)
-	}
-
-	roundTripper := &http3.RoundTripper{
-		TLSClientConfig: &tls.Config{
-			RootCAs:            pool,
-			InsecureSkipVerify: true,
-		},
-	}
 	if hclient == nil {
 		hclient = &http.Client{
-			Transport: roundTripper,
+			Transport: &http3.RoundTripper{
+				TLSClientConfig: &tls.Config{
+					InsecureSkipVerify: true,
+				},
+			},
 		}
 	}
 	fmt.Printf("golang: GET %s\n", addr)

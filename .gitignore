@@ -226,6 +226,7 @@ tools/
 *.mpd
 ASTREAM_LOGS
 dist/golang/vendor/
+dist/results
 dist/golang/dist
 dist/golang/h3client.so
 dist/golang/h3client.h
