@@ -37,6 +37,6 @@ while getopts "p:i:b:d:l:" optKey; do
     esac
 done
 
-python3 ${SCRIPT_DIR}/main.py --MPD https://${IP}:${PORT}/bunny_2s/bbb.mpd ${PROTOCOL} -b ${BW} -d ${DELAY} -l ${LOSS}
+python3 ${SCRIPT_DIR}/main.py --MPD https://${IP}:${PORT}/bunny_2s/bbb_short.mpd ${PROTOCOL} -b ${BW} -d ${DELAY} -l ${LOSS}
 
 
