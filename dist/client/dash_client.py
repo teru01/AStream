@@ -235,7 +235,6 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
     bitrates = list(dp_object.video.keys())
     bitrates.sort()
     average_dwn_time = 0
-    segment_files = []
     config_dash.JSON_HANDLE['segment_number'] = len(dp_list) - 1
     # with open("dp_list_svc.txt", "w") as f:
     #     for i, d in dp_list.items():
@@ -278,10 +277,9 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
                     segment_url = urllib.parse.urljoin(domain, bl_path)
                     config_dash.LOG.info("{}: BL URL = {}".format(playback_type.upper(), segment_url))
 
-                    segment_download_time, segment_filename, segment_size = download_wrapper(segment_url,
+                    download_wrapper(segment_url,
                         file_identifier, previous_segment_times, recent_download_sizes,
                         current_bitrate, segment_number, video_segment_duration, dash_player, config_dash.SVC_BASE_LAYER)
-                    segment_files.append(segment_filename)
 
                     config_dash.LOG.info("qsize: {}".format(dash_player.buffer.qsize()))
 
@@ -295,10 +293,9 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
                     config_dash.LOG.info("seg URL = {}".format(segment_url))
 
                     # download base layer
-                    segment_download_time, segment_filename, segment_size = download_wrapper(segment_url,
+                    download_wrapper(segment_url,
                         file_identifier, previous_segment_times, recent_download_sizes,
                         current_bitrate, segment_number, video_segment_duration, dash_player, config_dash.SVC_BASE_LAYER)
-                    segment_files.append(segment_filename)
 
                     if dash_player.buffer.qsize() > config_dash.SVC_THRESHOLD:
                         delay = dash_player.buffer.qsize() - config_dash.SVC_THRESHOLD
@@ -326,7 +323,7 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
                                 segment_url = urllib.parse.urljoin(domain, el_path)
                                 config_dash.LOG.info("seg URL = {}".format(segment_url))
                                 try:
-                                    segment_download_time, segment_filename, segment_size = download_wrapper(segment_url,
+                                    download_wrapper(segment_url,
                                         file_identifier, previous_segment_times, recent_download_sizes,
                                         current_bitrate, eh_head_ind, video_segment_duration, dash_player, config_dash.SVC_EH_LAYER)
                                     max_safe_layer_id, _ = basic_dash2.basic_dash2("", bitrates, "", recent_download_sizes, previous_segment_times, current_bitrate)
@@ -431,7 +428,6 @@ def download_wrapper(segment_url,
             bl_segment['data'].append(segment_filename)
             bl_segment['URI'].append(segment_url)
 
-    return segment_download_time, segment_filename, segment_size
 
 def get_segment_sizes(dp_object, segment_number):
     """ Module to get the segment sizes for the segment_number
