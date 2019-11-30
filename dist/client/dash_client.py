@@ -33,6 +33,7 @@ from . import dash_buffer
 from .configure_log_file import configure_log_file, write_json
 import time
 from ctypes import *
+import threading
 
 # Constants
 DEFAULT_PLAYBACK = 'BASIC'
@@ -323,9 +324,9 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
                                 segment_url = urllib.parse.urljoin(domain, el_path)
                                 config_dash.LOG.info("seg URL = {}".format(segment_url))
                                 try:
-                                    download_wrapper(segment_url,
+                                    threading.Thread(target=download_wrapper, args=(segment_url,
                                         file_identifier, previous_segment_times, recent_download_sizes,
-                                        current_bitrate, eh_head_ind, video_segment_duration, dash_player, config_dash.SVC_EH_LAYER)
+                                        current_bitrate, eh_head_ind, video_segment_duration, dash_player, config_dash.SVC_EH_LAYER)).start()
                                     max_safe_layer_id, _ = basic_dash2.basic_dash2("", bitrates, "", recent_download_sizes, previous_segment_times, current_bitrate)
                                     current_bitrate = bitrates[max_safe_layer_id]
                                 except RuntimeError as e:
