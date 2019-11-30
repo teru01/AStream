@@ -64,8 +64,8 @@ class DashPlayback:
 
 class Connection:
     def __init__(self, proto):
-        libh3 = cdll.LoadLibrary("./golang/h3client.so")
-        libh2 = cdll.LoadLibrary("./golang/h2client.so")
+        libh3 = cdll.LoadLibrary(os.path.join(os.path.dirname(__file__), "../golang/h3client.so"))
+        libh2 = cdll.LoadLibrary(os.path.join(os.path.dirname(__file__), "../golang/h2client.so"))
         if proto == "h2":
             self.request = libh2.H2client
         elif proto == "h3":
@@ -241,6 +241,7 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
             # print(segment_url)
             dp_list[segment_count][bitrate] = segment_url
     bitrates = list(dp_object.video.keys())
+    config_dash.JSON_HANDLE['segment_number'] = len(dp_list) - 1
     bitrates.sort()
     average_dwn_time = 0
     segment_files = []
@@ -504,17 +505,16 @@ def create_arguments(parser):
     """ Adding arguments to the parser """
     parser.add_argument('-m', '--MPD',
                         help="Url to the MPD File")
-    parser.add_argument('-l', '--LIST', action='store_true',
-                        help="List all the representations")
+    parser.add_argument('-l', '--LOSS',
+                        help="packet loss")
     parser.add_argument('-p', '--PLAYBACK',
                         default=DEFAULT_PLAYBACK,
                         help="Playback type (basic, sara, netflix, or all)")
     parser.add_argument('-n', '--SEGMENT_LIMIT',
                         default=SEGMENT_LIMIT,
                         help="The Segment number limit")
-    parser.add_argument('-d', '--DOWNLOAD', action='store_true',
-                        default=False,
-                        help="Keep the video files after playback")
+    parser.add_argument('-d', '--DELAY', help="delay")
+    parser.add_argument('-b', '--BANDWIDTH', help="bandwidth")
     parser.add_argument('-pro', '--PROTOCOL',
                         default="h2",
                         help="protocol[h2|h3]")
@@ -532,6 +532,10 @@ def main():
 
     http_connection = Connection(PROTOCOL)
     configure_log_file(playback_type=PLAYBACK.lower())
+    config_dash.JSON_HANDLE['loss'] = args.LOSS
+    config_dash.JSON_HANDLE['delay'] = args.DELAY
+    config_dash.JSON_HANDLE['bandwidth'] = args.BANDWIDTH
+    config_dash.JSON_HANDLE['protocol'] = args.PROTOCOL
     config_dash.JSON_HANDLE['playback_type'] = PLAYBACK.lower()
     if not MPD:
         print("ERROR: Please provide the URL to the MPD file. Try Again..")
