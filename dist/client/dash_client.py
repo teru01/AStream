@@ -308,6 +308,7 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
                     current_playback_index = dash_player.playback_index
                     eh_head_ind = current_playback_index + 2
                     safe_region = False
+                    dl_threads = []
                     while dash_player.playback_index + 1 < eh_head_ind <= segment_number:
                         if dash_player.buffer.qsize() > config_dash.SVC_A:
                             safe_region = True
@@ -324,9 +325,11 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
                                 segment_url = urllib.parse.urljoin(domain, el_path)
                                 config_dash.LOG.info("seg URL = {}".format(segment_url))
                                 try:
-                                    threading.Thread(target=download_wrapper, args=(segment_url,
+                                    t = threading.Thread(target=download_wrapper, args=(segment_url,
                                         file_identifier, previous_segment_times, recent_download_sizes,
-                                        current_bitrate, eh_head_ind, video_segment_duration, dash_player, config_dash.SVC_EH_LAYER)).start()
+                                        current_bitrate, eh_head_ind, video_segment_duration, dash_player, config_dash.SVC_EH_LAYER))
+                                    dl_threads.append(t)
+                                    t.start()
                                     max_safe_layer_id, _ = basic_dash2.basic_dash2("", bitrates, "", recent_download_sizes, previous_segment_times, current_bitrate)
                                     current_bitrate = bitrates[max_safe_layer_id]
                                 except RuntimeError as e:
@@ -335,6 +338,8 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
                                     # config_dash.LOG.warning("")
 
                         eh_head_ind += 1
+                    for th in dl_threads:
+                        th.join()
 
             else:
                 config_dash.LOG.error("Unknown playback type:{}. Continuing with basic playback".format(playback_type))
