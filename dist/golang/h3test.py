@@ -17,15 +17,18 @@ def download():
     data = bytes(cast(ptr,
             POINTER(c_ubyte*(8 + length))
             ).contents[8:])
+    print('ok')
 
 def main():
     start = time.time()
     threads = []
-    for i in range(50):
+    for i in range(10):
         t = threading.Thread(target=download)
         threads.append(t)
         t.start()
         # print(data)
+        # time.sleep(1)
+        download()
     for t in threads:
         t.join()
     print(time.time() - start)

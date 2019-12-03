@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"crypto/tls"
 	"encoding/binary"
-	"fmt"
 	"io"
 	"net/http"
 	"unsafe"
@@ -24,7 +23,7 @@ func h2client(addr string) []byte {
 			},
 		}
 	}
-	fmt.Printf("golang: GET %s\n", addr)
+	// fmt.Printf("golang: GET %s\n", addr)
 	resp, err := client.Get(addr)
 	if err != nil {
 		panic(err)
@@ -46,4 +45,4 @@ func H2client(addr *C.char) unsafe.Pointer {
 	return C.CBytes(append(length, resp...))
 }
 
-// func main() {}
+func main() {}

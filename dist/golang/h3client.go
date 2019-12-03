@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"unsafe"
 
 	"github.com/lucas-clemente/quic-go/http3"
@@ -16,16 +17,18 @@ import (
 var hclient *http.Client
 
 func h3client(addr string) []byte {
+	kl, err := os.OpenFile("h3_keylog", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0777)
 	if hclient == nil {
 		hclient = &http.Client{
 			Transport: &http3.RoundTripper{
 				TLSClientConfig: &tls.Config{
 					InsecureSkipVerify: true,
+					KeyLogWriter:       kl,
 				},
 			},
 		}
 	}
-	fmt.Printf("golang: GET %s\n", addr)
+	// fmt.Printf("golang: GET %s\n", addr)
 	rsp, err := hclient.Get(addr) // 以前のコネクションを使いまわしたい
 	if err != nil {
 		panic(err)
