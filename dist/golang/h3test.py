@@ -6,7 +6,7 @@ import time
 
 lib = cdll.LoadLibrary("./h3client.so")
 client = lib.H3client
-url = "https://dash.localdomain:6666/fall.jpg"
+url = "https://dash.localdomain:6666/index.html"
 
 client.argtypes = [c_char_p]
 client.restype = POINTER(c_ubyte*8)
@@ -21,7 +21,7 @@ def download():
 def main():
     start = time.time()
     threads = []
-    for i in range(50):
+    for i in range(30):
         t = threading.Thread(target=download)
         threads.append(t)
         t.start()

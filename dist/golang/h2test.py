@@ -6,7 +6,7 @@ import time
 
 lib = cdll.LoadLibrary("./h2client.so")
 client = lib.H2client
-url = "https://dash.localdomain:4443/fall.jpg"
+url = "https://dash.localdomain:4443/index.html"
 
 client.argtypes = [c_char_p]
 client.restype = POINTER(c_ubyte*8)

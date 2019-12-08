@@ -10,6 +10,8 @@ import (
 	"io"
 	"net/http"
 	"unsafe"
+
+	"golang.org/x/net/http2"
 )
 
 var client *http.Client
@@ -17,7 +19,7 @@ var client *http.Client
 func h2client(addr string) []byte {
 	if client == nil {
 		client = &http.Client{
-			Transport: &http.Transport{
+			Transport: &http2.Transport{
 				TLSClientConfig: &tls.Config{
 					InsecureSkipVerify: true,
 				},
