@@ -428,7 +428,7 @@ def download_wrapper(segment_url,
             bl_segment = dash_player.buffer.search_segment(segment_number)
             if bl_segment == None:
                 config_dash.LOG.info('segnum: {} not found'.format(segment_number))
-                raise RuntimeError('segment is not available')
+                return
             bl_segment['size'].append(segment_size)
             bl_segment['bitrate'].append(current_bitrate)
             bl_segment['data'].append(segment_filename)

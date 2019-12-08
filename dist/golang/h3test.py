@@ -21,7 +21,7 @@ def download():
 def main():
     start = time.time()
     threads = []
-    for i in range(30):
+    for i in range(50):
         t = threading.Thread(target=download)
         threads.append(t)
         t.start()
