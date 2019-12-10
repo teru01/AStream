@@ -566,6 +566,7 @@ def main():
     config_dash.JSON_HANDLE['delay'] = args.DELAY
     config_dash.JSON_HANDLE['bandwidth'] = args.BANDWIDTH
     config_dash.JSON_HANDLE['protocol'] = args.PROTOCOL
+    config_dash.JSON_HANDLE['mpd'] = MPD
     
     if not MPD:
         print("ERROR: Please provide the URL to the MPD file. Try Again..")

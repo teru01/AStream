@@ -8,7 +8,7 @@ PROTOCOL=""
 PORT="4443"
 IP="dash.localdomain"
 
-while getopts "p:i:b:d:l:" optKey; do
+while getopts "p:i:b:d:l:r:" optKey; do
     case "$optKey" in
         p)
             if [ ${OPTARG} = "h3" ]; then
@@ -31,12 +31,19 @@ while getopts "p:i:b:d:l:" optKey; do
         l)
             LOSS=${OPTARG}
             ;;
-
+        r)
+            RESOLUTION=${OPTARG}
+            if [ ${RESOLUTION} = "360" ]; then
+                MPDPATH="BBB-360p/bbb_short.mpd"
+            else
+                MPDPATH="720p/BBB-I-720p_short.mpd"
+            fi
+            ;;
         *)
             ;;
     esac
 done
 
-python3 ${SCRIPT_DIR}/main.py --MPD https://${IP}:${PORT}/720p/BBB-I-720p_short.mpd -p svc ${PROTOCOL} -b ${BW} -d ${DELAY} -l ${LOSS}
+python3 ${SCRIPT_DIR}/main.py --MPD https://${IP}:${PORT}/${MPDPATH} -p svc ${PROTOCOL} -b ${BW} -d ${DELAY} -l ${LOSS}
 
 
