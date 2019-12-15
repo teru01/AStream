@@ -67,7 +67,7 @@ def generate_stat(logFile, ssimFile):
             ssim_dict = json.loads(f_ssim.readline())
 
         with open('{}/results/result_{}'.format(current_dir, logFile.split('/')[-1].replace('json', 'txt')), 'w') as f_result:
-            f_result.write('proto: {}\nloss: {}\ndelay: {}\nbw: {}\nmpd: {}\n'.format(log_dict['protocol'], log_dict['loss'], log_dict['delay'], log_dict['bandwidth'], log_dict['mpd']))
+            f_result.write('proto: {}\nloss: {}\ndelay: {}\nbw: {}\nmpd: {}\nsvc_a: {}\nsvc_b: {}\nbuffer: {}\n'.format(log_dict['protocol'], log_dict['loss'], log_dict['delay'], log_dict['bandwidth'], log_dict['mpd'], log_dict['SVC_A'], log_dict['SVC_B'], log_dict['buffer_size']))
             f_result.write("bufratio: {}\n".format(calc_bufratio(log_dict)))
             f_result.write("average ssim: {}\n".format(calc_average_ssim(log_dict, ssim_dict)))
             f_result.write(make_layer_str(log_dict))
