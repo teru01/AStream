@@ -1,6 +1,6 @@
 module github.com/teru01/AStream/dist/golang
 
-replace github.com/lucas-clemente/quic-go => ../../../../lucas-clemente/quic-go/
+replace github.com/lucas-clemente/quic-go => ../../../../teru01/quic-go/
 
 go 1.13
 
