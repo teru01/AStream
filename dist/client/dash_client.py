@@ -420,8 +420,6 @@ def download_wrapper(segment_url,
                         'segment_number': segment_number}
         segment_duration = segment_info['playback_length']
         dash_player.write(segment_info)
-        config_dash.LOG.info("Downloaded %s. Size = %s in %s seconds" % (
-            segment_url, segment_size, str(segment_download_time)))
     elif segment_type == config_dash.SVC_EH_LAYER:
         # キューから対応するセグメントを取り出し更新
         with dash_player.buffer_lock:
@@ -434,6 +432,8 @@ def download_wrapper(segment_url,
             bl_segment['data'].append(segment_filename)
             bl_segment['URI'].append(segment_url)
 
+    config_dash.LOG.info("Downloaded %s. Size = %s in %s seconds" % (
+        segment_url, segment_size, str(segment_download_time)))
 
 def get_segment_sizes(dp_object, segment_number):
     """ Module to get the segment sizes for the segment_number
