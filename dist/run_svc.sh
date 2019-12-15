@@ -7,6 +7,7 @@ SCRIPT_DIR=$(cd $(dirname $0); pwd)
 PROTOCOL=""
 PORT="4443"
 IP="dash.localdomain"
+MPDPATH="720p/BBB-I-720p_short.mpd"
 
 while getopts "p:i:b:d:l:r:" optKey; do
     case "$optKey" in

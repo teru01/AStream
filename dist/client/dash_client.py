@@ -385,7 +385,7 @@ def download_wrapper(segment_url,
     start_time = timeit.default_timer()
     try:
         segment_size, segment_filename = download_segment(segment_url, file_identifier)
-        config_dash.LOG.info("Downloaded segment {}".format(segment_url))
+        config_dash.LOG.info("Downloaded segment {}, segment_num: {}".format(segment_url, segment_number))
     except IOError as e:
         config_dash.LOG.error("Unable to save segment %s" % e)
         return None
@@ -396,8 +396,6 @@ def download_wrapper(segment_url,
     segment_name = os.path.split(segment_url)[1]
     if "segment_info" not in config_dash.JSON_HANDLE:
         config_dash.JSON_HANDLE["segment_info"] = list()
-    config_dash.JSON_HANDLE["segment_info"].append((segment_name, current_bitrate, segment_size,
-                                                    segment_download_time))
     config_dash.LOG.info("segment_size = {}, segment_number = {}".format(segment_size, segment_number))
 
     with open(config_dash.BUFFER_ANIME_FILENAME, 'a') as f_anime:
@@ -432,6 +430,8 @@ def download_wrapper(segment_url,
             bl_segment['data'].append(segment_filename)
             bl_segment['URI'].append(segment_url)
 
+    config_dash.JSON_HANDLE["segment_info"].append((segment_name, current_bitrate, segment_size,
+                                                    segment_download_time))
     config_dash.LOG.info("Downloaded %s. Size = %s in %s seconds" % (
         segment_url, segment_size, str(segment_download_time)))
 
