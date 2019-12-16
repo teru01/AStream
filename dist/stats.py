@@ -14,13 +14,25 @@ def get_option(log_file, ssim_file, n):
     return argparser.parse_args()
 
 def parse_maximum_layer(log_dict, n):
-    layer_of_segments = [0] * n
+    layer_of_segments = [[] for _ in range(n)]
     for segment in log_dict['segment_info']:
         _, _, seg, lay = segment[0].split('-')
         seg_ind = int(seg.split('.')[-1][3:])
         layer = int(lay.split('.')[0][1:])
-        layer_of_segments[seg_ind] = max(layer_of_segments[seg_ind], layer)
-    return layer_of_segments
+        layer_of_segments[seg_ind].append(layer)
+    max_layer = [0] * n
+    for i in range(n):
+        l = sorted(layer_of_segments[i])
+        prev = -1
+        for j in l:
+            if j == prev + 1:
+                max_layer[i] = j
+            else:
+                max_layer[i] = prev
+                break
+            prev = j
+
+    return max_layer
 
 def calc_average_ssim(log_dict, ssim_dict):
     n = log_dict['segment_number']
