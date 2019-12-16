@@ -570,6 +570,7 @@ def main():
     config_dash.JSON_HANDLE['SVC_A'] = config_dash.SVC_A
     config_dash.JSON_HANDLE['SVC_B'] = config_dash.SVC_B
     config_dash.JSON_HANDLE['buffer_size'] = config_dash.SVC_THRESHOLD
+    config_dash.JSON_HANDLE['algor'] = 'svc-para'
     
     if not MPD:
         print("ERROR: Please provide the URL to the MPD file. Try Again..")
