@@ -309,33 +309,48 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
                     eh_head_ind = current_playback_index + 2
                     safe_region = False
                     dl_threads = []
-                    while dash_player.playback_index + 1 < eh_head_ind <= segment_number:
+                    while dash_player.playback_index+1 < eh_head_ind <= segment_number:
                         if dash_player.buffer.qsize() > config_dash.SVC_A:
                             safe_region = True
-                        elif dash_player.buffer.qsize() < config_dash.SVC_B:
+                        else:
                             safe_region = False
                         config_dash.LOG.info("call highest recv layer: cur_p_i: {}, eh_head: {}".format(current_playback_index, eh_head_ind))
                         eh_head_layer_id = highest_received_layer(eh_head_ind, dash_player)
                         if eh_head_layer_id < len(bitrates)-1:
+                            dl_seglist = []
                             # 最高レイヤーでないならELをDL
-                            if bitrates[max_safe_layer_id] >= bitrates[eh_head_layer_id + 1] \
-                                or (safe_region and bitrates[max(max_safe_layer_id+1, len(bitrates)-1)] >= bitrates[eh_head_layer_id+1]):
+                            if safe_region:
+                                # 安全なら直近のものまとめて2層
+                                el_path_1 = dp_list[eh_head_ind][bitrates[eh_head_layer_id+1]]
+                                segment_url_1 = urllib.parse.urljoin(domain, el_path_1)
+                                config_dash.LOG.info("seg URL = {}".format(segment_url_1))
+                                dl_seglist.append(segment_url_1)
 
-                                el_path = dp_list[eh_head_ind][bitrates[eh_head_layer_id+1]]
-                                segment_url = urllib.parse.urljoin(domain, el_path)
-                                config_dash.LOG.info("seg URL = {}".format(segment_url))
-                                try:
-                                    t = threading.Thread(target=download_wrapper, args=(segment_url,
+                                if eh_head_layer_id + 2 <= len(bitrates)-1:
+                                    el_path_2 = dp_list[eh_head_ind][bitrates[eh_head_layer_id+2]]
+                                    segment_url_2= urllib.parse.urljoin(domain, el_path_2)
+                                    config_dash.LOG.info("seg URL = {}".format(segment_url_2))
+                                    dl_seglist.append(segment_url_2)
+
+                            else:
+                                if bitrates[max_safe_layer_id] >= bitrates[eh_head_layer_id + 1]:
+                                    el_path = dp_list[eh_head_ind][bitrates[eh_head_layer_id+1]]
+                                    segment_url = urllib.parse.urljoin(domain, el_path)
+                                    config_dash.LOG.info("seg URL = {}".format(segment_url))
+                                    dl_seglist.append(segment_url)
+
+                            try:
+                                for seg in dl_seglist:
+                                    t = threading.Thread(target=download_wrapper, args=(seg,
                                         file_identifier, previous_segment_times, recent_download_sizes,
                                         current_bitrate, eh_head_ind, video_segment_duration, dash_player, config_dash.SVC_EH_LAYER))
                                     dl_threads.append(t)
                                     t.start()
-                                    max_safe_layer_id, _ = basic_dash2.basic_dash2("", bitrates, "", recent_download_sizes, previous_segment_times, current_bitrate)
-                                    current_bitrate = bitrates[max_safe_layer_id]
-                                except RuntimeError as e:
-                                    # キューへの挿入ができなかった
-                                    pass
-                                    # config_dash.LOG.warning("")
+                          
+                            except RuntimeError as e:
+                                # キューへの挿入ができなかった
+                                pass
+                                # config_dash.LOG.warning("")
 
                         eh_head_ind += 1
                     for th in dl_threads:
