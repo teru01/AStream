@@ -6,10 +6,13 @@ import glob
 from argparse import ArgumentParser
 import os
 
-def get_option(log_file, ssim_file, n):
+frame_per_segs = 48
+
+def get_option(log_file, ssim_file, frame_ssim_file, n):
     argparser = ArgumentParser()
     argparser.add_argument('-l', '--logFile', type=str, default=log_file)
     argparser.add_argument('-s', '--ssimFile', type=str, default=ssim_file)
+    argparser.add_argument('-s', '--frameSsimFile', type=str, default=frame_ssim_file)
     argparser.add_argument('-n', '--num', type=int, default=n)
     return argparser.parse_args()
 
@@ -42,6 +45,42 @@ def calc_average_ssim(log_dict, ssim_dict):
         s += ssim_dict[i]["L" + str(layer_of_segments[i])]
     return s / n
 
+def calc_maximum_frame_layer(log_dict):
+    n = log_dict['segment_number']
+    max_frame_of_segments = [[0] * frame_per_segs for _ in range(n)]
+    layer_of_segments = [[] for _ in range(n)]
+
+    for segment in log_dict['segment_info']:
+        _, _, seg, lay = segment[0].split('-')
+        seg_ind = int(seg.split('.')[-1][3:])
+        layer = int(lay.split('.')[0][1:])
+
+        loss_range = int(log_dict['valid_offset_from_head'])
+
+        layer_of_segments[seg_ind].append((layer, loss_range))
+
+    from operator import itemgetter
+    for i in range(n):
+        l = sorted(layer_of_segments[i])
+        if len(l) == 1:
+            continue
+        for layer, loss_range in l:
+            for j in range(frame_per_segs):
+                if j <= loss_range:
+                    if layer - max_frame_of_segments[i][j] <= 1:
+                        max_frame_of_segments[i][j] = layer
+    return max_frame_of_segments
+
+
+def calc_frame_average_ssim(log_dict, frame_ssim_list):
+    n = log_dict['segment_number']
+    s = 0
+    maximum_frame_layer = calc_maximum_frame_layer(log_dict)
+    for i in range(n):
+        for j, M in enumerate(maximum_frame_layer[n]): # ma_f_l = [3,3,3,2,2,1,0]
+            s += frame_ssim_list[frame_per_segs * i + j][M]
+    return s / (n * frame_per_segs)
+
 def calc_bufratio(log_dict):
     play_duration = log_dict['video_metadata']['playback_duration']
     total_stall_duration = log_dict['playback_info']['interruptions']['total_duration']
@@ -66,8 +105,13 @@ def make_layer_str(log_dict):
     s += "\n"
     return s
 
+def calc_ssim(log_dict, ssim_dict, frame_ssim_list):
+    if log_dict['unreliable']:
+        return calc_frame_average_ssim(log_dict, frame_ssim_list)
+    else:
+        return calc_average_ssim(log_dict, ssim_dict)
 
-def generate_stat(logFile, ssimFile):
+def generate_stat(logFile, ssimFile, frame_ssim_file):
         print("logfile: ", logFile)
         print("ssimfile: ", ssimFile)
 
@@ -78,10 +122,14 @@ def generate_stat(logFile, ssimFile):
         with open(ssimFile, 'r') as f_ssim:
             ssim_dict = json.loads(f_ssim.readline())
 
+        with open(frame_ssim_file, 'r') as f_framessim:
+            frame_ssim_list = json.loads(f_framessim.readline())
+
         with open('{}/results/result_{}'.format(current_dir, logFile.split('/')[-1].replace('json', 'txt')), 'w') as f_result:
             f_result.write('proto: {}\nloss: {}\ndelay: {}\nbw: {}\nmpd: {}\nsvc_a: {}\nsvc_b: {}\nbuffer: {}\nalgor: {}\n'.format(log_dict['protocol'], log_dict['loss'], log_dict['delay'], log_dict['bandwidth'], log_dict['mpd'], log_dict['SVC_A'], log_dict['SVC_B'], log_dict['buffer_size'], log_dict['algor']))
+            f_result.write("unreliable: {}\n".format(log_dict['unreliable']))
             f_result.write("bufratio: {}\n".format(calc_bufratio(log_dict)))
-            f_result.write("average ssim: {}\n".format(calc_average_ssim(log_dict, ssim_dict)))
+            f_result.write("average ssim: {}\n".format(calc_ssim(log_dict, ssim_dict, frame_ssim_list)))
             f_result.write(make_layer_str(log_dict))
 
 
@@ -89,12 +137,14 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 
 def main():
     logfiles = sorted(glob.glob(current_dir + "/ASTREAM_LOGS/ASTREAM_*"))
-    ssimfiles = sorted(glob.glob(current_dir + "/ssims/ssim_*"))
+    ssimfiles = sorted(glob.glob(current_dir + "/ssims/ssim_BBB.json"))
+    frame_ssim_files = sorted(glob.glob(current_dir + "/ssims/ssim_frame_BBB.json"))
     print(logfiles[-1])
     print(current_dir)
     print(ssimfiles[-1])
-    args = get_option(logfiles[-1], ssimfiles[-1], 1)
-    generate_stat(args.logFile, args.ssimFile)
+    print(frame_ssim_files[-1])
+    args = get_option(logfiles[-1], ssimfiles[-1], frame_ssim_files[-1], 1)
+    generate_stat(args.logFile, args.ssimFile, args)
 
 
 if __name__ == "__main__":

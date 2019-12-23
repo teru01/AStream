@@ -83,7 +83,8 @@ class Connection:
         data = bytes(cast(ptr,
                 POINTER(c_ubyte*(8 + length))
                 ).contents[8:])
-        return data
+        
+        return data, valid_offset
 
 def get_mpd(url):
     """ Module to download the MPD from the URL and save it to file"""
@@ -150,12 +151,12 @@ def download_segment(segment_url, dash_folder):
     make_sure_path_exists(os.path.dirname(segment_filename))
     segment_file_handle = open(segment_filename, 'wb')
 
-    segment_data = connection.read(segment_url)
+    segment_data, valid_offset_from_head = connection.read(segment_url)
     segment_file_handle.write(segment_data)
     segment_file_handle.close()
     #print "segment size = {}".format(segment_size)
     #print "segment filename = {}".format(segment_filename)
-    return len(segment_data), segment_filename
+    return len(segment_data), segment_filename, segment_data, valid_offset_from_head
 
 
 def get_media_all(domain, media_info, file_identifier, done_queue):
@@ -167,7 +168,7 @@ def get_media_all(domain, media_info, file_identifier, done_queue):
     for segment in [media.initialization] + media.url_list:
         start_time = timeit.default_timer()
         segment_url = urllib.parse.urljoin(domain, segment)
-        _, segment_file = download_segment(segment_url, file_identifier)
+        _, segment_file, _, _ = download_segment(segment_url, file_identifier)
         elapsed = timeit.default_timer() - start_time
         if segment_file:
             done_queue.put((bandwidth, segment_url, elapsed))
@@ -384,7 +385,7 @@ def download_wrapper(segment_url,
     # return: download time
     start_time = timeit.default_timer()
     try:
-        segment_size, segment_filename = download_segment(segment_url, file_identifier)
+        segment_size, segment_filename, payload, valid_offset_from_head = download_segment(segment_url, file_identifier)
         config_dash.LOG.info("Downloaded segment {}, segment_num: {}".format(segment_url, segment_number))
     except IOError as e:
         config_dash.LOG.error("Unable to save segment %s" % e)
@@ -430,6 +431,7 @@ def download_wrapper(segment_url,
             bl_segment['data'].append(segment_filename)
             bl_segment['URI'].append(segment_url)
 
+    # valid_frames_from_head = 
     config_dash.JSON_HANDLE["segment_info"].append((segment_name, current_bitrate, segment_size,
                                                     segment_download_time))
     config_dash.LOG.info("Downloaded %s. Size = %s in %s seconds" % (
@@ -544,6 +546,7 @@ def create_arguments(parser):
                         help="The Segment number limit")
     parser.add_argument('-d', '--DELAY', help="delay")
     parser.add_argument('-b', '--BANDWIDTH', help="bandwidth")
+    parser.add_argument('-u', '--UNRELIABLE', help="unreliable")
     parser.add_argument('-pro', '--PROTOCOL',
                         default="h2",
                         help="protocol[h2|h3]")
@@ -571,6 +574,7 @@ def main():
     config_dash.JSON_HANDLE['SVC_B'] = config_dash.SVC_B
     config_dash.JSON_HANDLE['buffer_size'] = config_dash.SVC_THRESHOLD
     config_dash.JSON_HANDLE['algor'] = 'svc'
+    config_dash.JSON_HANDLE['unreliable'] = args.UNRELIABLE
     
     if not MPD:
         print("ERROR: Please provide the URL to the MPD file. Try Again..")
