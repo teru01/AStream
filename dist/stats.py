@@ -55,7 +55,7 @@ def calc_maximum_frame_layer(log_dict):
         seg_ind = int(seg.split('.')[-1][3:])
         layer = int(lay.split('.')[0][1:])
 
-        loss_range = int(log_dict['valid_offset_from_head'])
+        loss_range = int(segment[4])
 
         layer_of_segments[seg_ind].append((layer, loss_range))
 
@@ -106,7 +106,7 @@ def make_layer_str(log_dict):
     return s
 
 def calc_ssim(log_dict, ssim_dict, frame_ssim_list):
-    if log_dict['unreliable']:
+    if log_dict['reliability'] == 'unreliable':
         return calc_frame_average_ssim(log_dict, frame_ssim_list)
     else:
         return calc_average_ssim(log_dict, ssim_dict)
@@ -127,7 +127,7 @@ def generate_stat(logFile, ssimFile, frame_ssim_file):
 
         with open('{}/results/result_{}'.format(current_dir, logFile.split('/')[-1].replace('json', 'txt')), 'w') as f_result:
             f_result.write('proto: {}\nloss: {}\ndelay: {}\nbw: {}\nmpd: {}\nsvc_a: {}\nsvc_b: {}\nbuffer: {}\nalgor: {}\n'.format(log_dict['protocol'], log_dict['loss'], log_dict['delay'], log_dict['bandwidth'], log_dict['mpd'], log_dict['SVC_A'], log_dict['SVC_B'], log_dict['buffer_size'], log_dict['algor']))
-            f_result.write("unreliable: {}\n".format(log_dict['unreliable']))
+            f_result.write("reliability: {}\n".format(log_dict['reliability']))
             f_result.write("bufratio: {}\n".format(calc_bufratio(log_dict)))
             f_result.write("average ssim: {}\n".format(calc_ssim(log_dict, ssim_dict, frame_ssim_list)))
             f_result.write(make_layer_str(log_dict))

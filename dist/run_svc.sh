@@ -9,7 +9,7 @@ PORT="4443"
 IP="dash.localdomain"
 MPDPATH="720p/BBB-I-720p_short.mpd"
 
-while getopts "p:i:b:d:l:r:" optKey; do
+while getopts "p:i:b:d:l:r:u:" optKey; do
     case "$optKey" in
         p)
             if [ ${OPTARG} = "h3" ]; then
@@ -40,11 +40,13 @@ while getopts "p:i:b:d:l:r:" optKey; do
                 MPDPATH="720p/BBB-I-720p_short.mpd"
             fi
             ;;
+        u)
+            RELIABILITY=${OPTARG}
         *)
             ;;
     esac
 done
 
-python3 ${SCRIPT_DIR}/main.py --MPD https://${IP}:${PORT}/${MPDPATH} -p svc ${PROTOCOL} -b ${BW} -d ${DELAY} -l ${LOSS}
+python3 ${SCRIPT_DIR}/main.py --MPD https://${IP}:${PORT}/${MPDPATH} -p svc ${PROTOCOL} -b ${BW} -d ${DELAY} -l ${LOSS} -u ${RELIABILITY}
 
 
