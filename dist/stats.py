@@ -66,7 +66,7 @@ def calc_maximum_frame_layer(log_dict):
             continue
         for layer, loss_range in l:
             for j in range(frame_per_segs):
-                if j <= loss_range:
+                if j < loss_range:
                     if layer - max_frame_of_segments[i][j] <= 1:
                         max_frame_of_segments[i][j] = layer
     return max_frame_of_segments

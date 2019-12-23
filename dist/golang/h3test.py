@@ -6,10 +6,10 @@ import time
 
 lib = cdll.LoadLibrary("./h3client.so")
 client = lib.H3client
-url = "https://dash.localdomain:6666/BBB-I-720p.seg0-L0.svc"
+url = "https://dash.localdomain:6666/BBB-I-720p.seg0-L1.svc"
 
 client.argtypes = [c_char_p, c_int]
-client.restype = POINTER(c_ubyte*8)
+client.restype = POINTER(c_ubyte*16)
 # addr = GoString(url.encode('utf8'), len(url))
 def download(unreliable):
     if unreliable:
@@ -19,16 +19,15 @@ def download(unreliable):
     ptr = client(url.encode('utf8'), flag)
     length = int.from_bytes(ptr.contents[:8], byteorder="little")
     validOffset = int.from_bytes(ptr.contents[8:16], byteorder="little")
-    data = bytes(cast(ptr,
-            POINTER(c_ubyte*(8 + length))
-            ).contents[8:])
-    return data, validOffset
+    # print("ptr.contents[8:9]: ", ptr.contents[8:9])
+    data = bytes(cast(ptr, POINTER(c_ubyte*(16 + length))).contents[9:])
+    return length, data, validOffset
 
 def main():
-    payload, o = download(True)
-    print(len(payload), o)
-    payload, o = download(False)
-    print(len(payload), o)
+    l, payload, o = download(True)
+    print(l, len(payload), o)
+    l, payload, o = download(False)
+    print(l, len(payload), o)
 
     # start = time.time()
     # threads = []

@@ -16,7 +16,7 @@ import (
 var hclient *http.Client
 const FRAMEPERSEG = 48
 
-func h3client(addr string, unreliable bool) ([]byte, int64) {
+func h3client(addr string, unreliable bool) ([]byte, uint64) {
 	if hclient == nil {
 		hclient = &http.Client{
 			Transport: &http3.RoundTripper{
@@ -40,7 +40,7 @@ func h3client(addr string, unreliable bool) ([]byte, int64) {
 		panic(err)
 	}
 
-	var validOffset int64
+	var validOffset uint64
 	if unreliable && layer > 0 {
 		// EL
 		validOffset = calcValidOffset(lossRange, vbuf.Bytes())
@@ -61,23 +61,26 @@ func H3client(addr *C.char, flag C.int) unsafe.Pointer {
 		unreliable = false
 	}
 	resp, validOffset := h3client(s, unreliable)
+	fmt.Println("valid: ", validOffset)
 	length := make([]byte, 8)
 	offsetBuf := make([]byte, 8)
 	binary.LittleEndian.PutUint64(length, uint64(len(resp)))
-	binary.PutVarint(offsetBuf, validOffset)
+	binary.LittleEndian.PutUint64(offsetBuf, validOffset)
+	fmt.Println("bin ", offsetBuf)
+	fmt.Println("len ", len(append(append(length, offsetBuf...), resp...)))
 	return C.CBytes(append(append(length, offsetBuf...), resp...))
 }
 
-func calcValidOffset(lossRange []quic.ByteRange, payload []byte) int64 {
+func calcValidOffset(lossRange []quic.ByteRange, payload []byte) uint64 {
 	if len(lossRange) == 0 {
-		return FRAMEPERSEG - 1
+		return FRAMEPERSEG
 	}
 	if lossRange[0].Start == 0 {
 		// 先頭バイトがロスしてる
-		return -1
+		return 0
 	}
 	data := payload[:lossRange[0].Start]
-	return int64(len(bytes.Split(data, []byte{0x0, 0x1}))-3) // 利用できる最大のフレームオフセット
+	return uint64(len(bytes.Split(data, []byte{0x0, 0x1})) - 2) // 利用できる最大のフレームオフセット
 }
 
 
