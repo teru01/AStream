@@ -10,10 +10,7 @@
             "type": "python",
             "request": "launch",
             "program": "${file}",
-            "args": [
-                "--MPD",
-                "https://dash.localdomain:4443/720p/BBB-I-720p.mpd",
-            ],
+            "args": [],
             "console": "integratedTerminal"
         },
         {
