@@ -12,7 +12,7 @@ def get_option(log_file, ssim_file, frame_ssim_file, n):
     argparser = ArgumentParser()
     argparser.add_argument('-l', '--logFile', type=str, default=log_file)
     argparser.add_argument('-s', '--ssimFile', type=str, default=ssim_file)
-    argparser.add_argument('-s', '--frameSsimFile', type=str, default=frame_ssim_file)
+    argparser.add_argument('-f', '--frameSsimFile', type=str, default=frame_ssim_file)
     argparser.add_argument('-n', '--num', type=int, default=n)
     return argparser.parse_args()
 
@@ -144,7 +144,7 @@ def main():
     print(ssimfiles[-1])
     print(frame_ssim_files[-1])
     args = get_option(logfiles[-1], ssimfiles[-1], frame_ssim_files[-1], 1)
-    generate_stat(args.logFile, args.ssimFile, args)
+    generate_stat(args.logFile, args.ssimFile, args.frameSsimFile)
 
 
 if __name__ == "__main__":
