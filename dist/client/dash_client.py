@@ -39,6 +39,8 @@ import threading
 DEFAULT_PLAYBACK = 'BASIC'
 DOWNLOAD_CHUNK = 1024
 
+unreliable_mode = False
+
 # Globals for arg parser with the default values
 # Not sure if this is the correct way ....
 MPD = None
@@ -86,7 +88,7 @@ class Connection:
         length = int.from_bytes(ptr.contents[:8], byteorder="little")
         validOffset = int.from_bytes(ptr.contents[8:16], byteorder="little")
         # print("ptr.contents[8:9]: ", ptr.contents[8:9])
-        data = bytes(cast(ptr, POINTER(c_ubyte*(16 + length))).contents[9:])
+        data = bytes(cast(ptr, POINTER(c_ubyte*(16 + length))).contents[16:])
         return data, validOffset
 
 def get_mpd(url):
@@ -108,7 +110,7 @@ def get_mpd(url):
         config_dash.LOG.error(message)
         return None
     
-    mpd_data, _ = connection.read(url, True)
+    mpd_data, _ = connection.read(url, False)
     mpd_file = url.split('/')[-1]
     mpd_file_handle = open(mpd_file, 'wb')
     mpd_file_handle.write(mpd_data)
@@ -139,7 +141,7 @@ def id_generator(id_size=6):
     return 'TEMP_' + ''.join(random.choice(ascii_letters+digits) for _ in range(id_size))
 
 
-def download_segment(segment_url, dash_folder):
+def download_segment(segment_url, dash_folder, unreliable):
     """ Module to download the segment """
     try:
         connection = http_connection
@@ -154,7 +156,7 @@ def download_segment(segment_url, dash_folder):
     make_sure_path_exists(os.path.dirname(segment_filename))
     segment_file_handle = open(segment_filename, 'wb')
 
-    segment_data, valid_offset_from_head = connection.read(segment_url)
+    segment_data, valid_offset_from_head = connection.read(segment_url, unreliable)
     segment_file_handle.write(segment_data)
     segment_file_handle.close()
     #print "segment size = {}".format(segment_size)
@@ -284,7 +286,7 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
 
                     download_wrapper(segment_url,
                         file_identifier, previous_segment_times, recent_download_sizes,
-                        current_bitrate, segment_number, video_segment_duration, dash_player, config_dash.SVC_BASE_LAYER)
+                        current_bitrate, segment_number, video_segment_duration, dash_player, config_dash.SVC_BASE_LAYER, False)
 
                     config_dash.LOG.info("qsize: {}".format(dash_player.buffer.qsize()))
 
@@ -300,7 +302,7 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
                     # download base layer
                     download_wrapper(segment_url,
                         file_identifier, previous_segment_times, recent_download_sizes,
-                        current_bitrate, segment_number, video_segment_duration, dash_player, config_dash.SVC_BASE_LAYER)
+                        current_bitrate, segment_number, video_segment_duration, dash_player, config_dash.SVC_BASE_LAYER, False)
 
                     if dash_player.buffer.qsize() > config_dash.SVC_THRESHOLD:
                         delay = dash_player.buffer.qsize() - config_dash.SVC_THRESHOLD
@@ -331,7 +333,7 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
                                 try:
                                     t = threading.Thread(target=download_wrapper, args=(segment_url,
                                         file_identifier, previous_segment_times, recent_download_sizes,
-                                        current_bitrate, eh_head_ind, video_segment_duration, dash_player, config_dash.SVC_EH_LAYER))
+                                        current_bitrate, eh_head_ind, video_segment_duration, dash_player, config_dash.SVC_EH_LAYER, unreliable_mode))
                                     dl_threads.append(t)
                                     t.start()
                                     max_safe_layer_id, _ = basic_dash2.basic_dash2("", bitrates, "", recent_download_sizes, previous_segment_times, current_bitrate)
@@ -383,12 +385,13 @@ def download_wrapper(segment_url,
     video_segment_duration,
     dash_player,
     segment_type,
+    unreliable
     ):
     # DLと統計情報の更新、
     # return: download time
     start_time = timeit.default_timer()
     try:
-        segment_size, segment_filename, payload, valid_frame_offset = download_segment(segment_url, file_identifier)
+        segment_size, segment_filename, payload, valid_frame_offset = download_segment(segment_url, file_identifier, unreliable)
         config_dash.LOG.info("Downloaded segment {}, segment_num: {}".format(segment_url, segment_number))
     except IOError as e:
         config_dash.LOG.error("Unable to save segment %s" % e)
@@ -578,6 +581,13 @@ def main():
     config_dash.JSON_HANDLE['buffer_size'] = config_dash.SVC_THRESHOLD
     config_dash.JSON_HANDLE['algor'] = 'svc'
     config_dash.JSON_HANDLE['reliability'] = args.RELIABILITY
+    
+    global unreliable_mode
+    if args.RELIABILITY == 'unreliable':
+        unreliable_mode = True
+    else:
+        unreliable_mode = False
+
     
     if not MPD:
         print("ERROR: Please provide the URL to the MPD file. Try Again..")

@@ -36,17 +36,15 @@ func h3client(addr string, unreliable bool) ([]byte, uint64) {
 	_, lossRange, err := http3.Copy(vbuf, body, rsp)
 	fmt.Println(lossRange)
 	layer, err := strconv.Atoi(string(addr[len(addr) - 5]))
-	if err != nil {
-		panic(err)
-	}
-
 	var validOffset uint64
-	if unreliable && layer > 0 {
-		// EL
-		validOffset = calcValidOffset(lossRange, vbuf.Bytes())
-	} else {
-		// BL
-		validOffset = FRAMEPERSEG - 1
+	if err == nil {
+		if unreliable && layer > 0 {
+			// EL
+			validOffset = calcValidOffset(lossRange, vbuf.Bytes())
+		} else {
+			// BL
+			validOffset = FRAMEPERSEG
+		}
 	}
 	return vbuf.Bytes(), validOffset
 }
