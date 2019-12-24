@@ -20,14 +20,21 @@ def download(unreliable):
     length = int.from_bytes(ptr.contents[:8], byteorder="little")
     validOffset = int.from_bytes(ptr.contents[8:16], byteorder="little")
     # print("ptr.contents[8:9]: ", ptr.contents[8:9])
-    data = bytes(cast(ptr, POINTER(c_ubyte*(16 + length))).contents[9:])
-    return length, data, validOffset
+    data = bytes(cast(ptr, POINTER(c_ubyte*(16 + length))).contents[16:])
+    return data, validOffset
 
 def main():
-    l, payload, o = download(True)
-    print(l, len(payload), o)
-    l, payload, o = download(False)
-    print(l, len(payload), o)
+    threads = []
+    for i in range(10):
+        if i < 5:
+            t = threading.Thread(target=download, args=(False,))
+        else:
+            t = threading.Thread(target=download, args=(True,))
+        threads.append(t)
+        t.start()
+
+    for t in threads:
+        t.join()
 
     # start = time.time()
     # threads = []

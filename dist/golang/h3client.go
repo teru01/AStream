@@ -78,7 +78,10 @@ func calcValidOffset(lossRange []quic.ByteRange, payload []byte) uint64 {
 		return 0
 	}
 	data := payload[:lossRange[0].Start]
-	return uint64(len(bytes.Split(data, []byte{0x0, 0x1})) - 2) // 利用できる最大のフレームオフセット
+	fmt.Println("start: ", lossRange[0].Start)
+	v := len(bytes.Split(data, []byte{0x0, 0x1})) - 2
+	fmt.Println("validoffset: ", v)
+	return uint64(v) // 利用できる最大のフレームオフセット
 }
 
 
