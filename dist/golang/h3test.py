@@ -6,17 +6,19 @@ import time
 
 lib = cdll.LoadLibrary("./h3client.so")
 client = lib.H3client
-url = "https://dash.localdomain:6666/BBB-I-720p.seg0-L1.svc"
+url = ["https://dash.localdomain:6666/720p/BBB-I-720p.seg4-L2.svc",
+"https://dash.localdomain:6666/720p/BBB-I-720p.seg5-L2.svc",
+"https://dash.localdomain:6666/720p/BBB-I-720p.seg6-L1.svc"]
 
 client.argtypes = [c_char_p, c_int]
 client.restype = POINTER(c_ubyte*16)
 # addr = GoString(url.encode('utf8'), len(url))
-def download(unreliable):
+def download(unreliable, i):
     if unreliable:
         flag = 1
     else:
         flag = 0
-    ptr = client(url.encode('utf8'), flag)
+    ptr = client(url[i].encode('utf8'), flag)
     length = int.from_bytes(ptr.contents[:8], byteorder="little")
     validOffset = int.from_bytes(ptr.contents[8:16], byteorder="little")
     # print("ptr.contents[8:9]: ", ptr.contents[8:9])
@@ -24,17 +26,10 @@ def download(unreliable):
     return data, validOffset
 
 def main():
-    threads = []
-    for i in range(10):
-        if i < 5:
-            t = threading.Thread(target=download, args=(False,))
-        else:
-            t = threading.Thread(target=download, args=(True,))
-        threads.append(t)
-        t.start()
-
-    for t in threads:
-        t.join()
+    while True:
+        for i in range(3):
+            time.sleep(0.1)
+            download(True, i)
 
     # start = time.time()
     # threads = []

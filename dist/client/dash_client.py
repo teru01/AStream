@@ -282,13 +282,10 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
                 if state == config_dash.SVC_STATE_INIT:
                     bl_path = segment[bitrates[0]]
                     segment_url = urllib.parse.urljoin(domain, bl_path)
-                    config_dash.LOG.info("{}: BL URL = {}".format(playback_type.upper(), segment_url))
 
                     download_wrapper(segment_url,
                         file_identifier, previous_segment_times, recent_download_sizes,
                         current_bitrate, segment_number, video_segment_duration, dash_player, config_dash.SVC_BASE_LAYER, False)
-
-                    config_dash.LOG.info("qsize: {}".format(dash_player.buffer.qsize()))
 
                     if dash_player.buffer.qsize() > config_dash.SVC_INITIAL_BUF:
                         state = config_dash.SVC_STATE_STABLE
@@ -297,7 +294,6 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
                 elif state == config_dash.SVC_STATE_STABLE:
                     bl_path = segment[bitrates[0]]
                     segment_url = urllib.parse.urljoin(domain, bl_path)
-                    config_dash.LOG.info("seg URL = {}".format(segment_url))
 
                     # download base layer
                     download_wrapper(segment_url,
@@ -309,7 +305,6 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
 
                     max_safe_layer_id, _ = basic_dash2.basic_dash2("", bitrates, "", recent_download_sizes, previous_segment_times, current_bitrate)
                     current_bitrate = bitrates[max_safe_layer_id]
-                    config_dash.LOG.info("current_bitrate: {}".format(current_bitrate))
 
                     current_playback_index = dash_player.playback_index
                     eh_head_ind = current_playback_index + 2
@@ -320,7 +315,6 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
                             safe_region = True
                         elif dash_player.buffer.qsize() < config_dash.SVC_B:
                             safe_region = False
-                        config_dash.LOG.info("call highest recv layer: cur_p_i: {}, eh_head: {}".format(current_playback_index, eh_head_ind))
                         eh_head_layer_id = highest_received_layer(eh_head_ind, dash_player)
                         if eh_head_layer_id < len(bitrates)-1:
                             # 最高レイヤーでないならELをDL
@@ -329,12 +323,13 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
 
                                 el_path = dp_list[eh_head_ind][bitrates[eh_head_layer_id+1]]
                                 segment_url = urllib.parse.urljoin(domain, el_path)
-                                config_dash.LOG.info("seg URL = {}".format(segment_url))
+                                config_dash.LOG.info("scheduled download = {}".format(segment_url.split('.')[-2:]))
                                 try:
                                     t = threading.Thread(target=download_wrapper, args=(segment_url,
                                         file_identifier, previous_segment_times, recent_download_sizes,
                                         current_bitrate, eh_head_ind, video_segment_duration, dash_player, config_dash.SVC_EH_LAYER, unreliable_mode))
                                     dl_threads.append(t)
+                                    # time.sleep(0.1)
                                     t.start()
                                     max_safe_layer_id, _ = basic_dash2.basic_dash2("", bitrates, "", recent_download_sizes, previous_segment_times, current_bitrate)
                                     current_bitrate = bitrates[max_safe_layer_id]
@@ -359,7 +354,6 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
             while time.time() - delay_start < (delay * video_segment_duration):
                 time.sleep(1)
             delay = 0
-            config_dash.LOG.debug("SLEPT for {} seconds ".format(time.time() - delay_start))
 
     # waiting for the player to finish playing
     while dash_player.playback_state not in dash_buffer.EXIT_STATES:
@@ -392,7 +386,7 @@ def download_wrapper(segment_url,
     start_time = timeit.default_timer()
     try:
         segment_size, segment_filename, payload, valid_frame_offset = download_segment(segment_url, file_identifier, unreliable)
-        config_dash.LOG.info("Downloaded segment {}, segment_num: {}".format(segment_url, segment_number))
+        config_dash.LOG.info("Downloaded segment {}, segment_num: {}".format(segment_url.split('.')[-2:], segment_number))
     except IOError as e:
         config_dash.LOG.error("Unable to save segment %s" % e)
         return None
@@ -403,7 +397,6 @@ def download_wrapper(segment_url,
     segment_name = os.path.split(segment_url)[1]
     if "segment_info" not in config_dash.JSON_HANDLE:
         config_dash.JSON_HANDLE["segment_info"] = list()
-    config_dash.LOG.info("segment_size = {}, segment_number = {}".format(segment_size, segment_number))
 
     with open(config_dash.BUFFER_ANIME_FILENAME, 'a') as f_anime:
         layer = segment_filename.split('.')[-2][-2:]
@@ -441,7 +434,7 @@ def download_wrapper(segment_url,
     config_dash.JSON_HANDLE["segment_info"].append((segment_name, current_bitrate, segment_size,
                                                     segment_download_time, valid_frame_offset))
     config_dash.LOG.info("Downloaded %s. Size = %s in %s seconds" % (
-        segment_url, segment_size, str(segment_download_time)))
+        segment_url.split('.')[-2:], segment_size, str(segment_download_time)))
 
 def get_segment_sizes(dp_object, segment_number):
     """ Module to get the segment sizes for the segment_number
