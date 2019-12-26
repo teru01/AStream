@@ -2,7 +2,9 @@
 set -eux
 
 cd ../../../quic-go
+git checkout master
 git pull origin master
 cd -
-go build -o h2client.so -buildmode=c-shared h2client.go
+
+rm h3client.so
 go build -o h3client.so -buildmode=c-shared h3client.go
