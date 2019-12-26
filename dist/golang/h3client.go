@@ -33,6 +33,7 @@ func h3client(addr string, unreliable bool) ([]byte, uint64) {
 	}
 	vbuf := &bytes.Buffer{}
 	body, _ := rsp.Body.(*http3.Body)
+
 	_, lossRange, err := http3.Copy(vbuf, body, rsp)
 	fmt.Println("lossRange: ", lossRange)
 	layer, err := strconv.Atoi(string(addr[len(addr) - 5]))
@@ -43,7 +44,7 @@ func h3client(addr string, unreliable bool) ([]byte, uint64) {
 			validOffset = calcValidOffset(lossRange, vbuf.Bytes())
 		} else {
 			// BL
-			validOffset = FRAMEPERSEG
+			validOffset = FRAMEPERSEG+1
 		}
 	}
 	return vbuf.Bytes(), validOffset
@@ -70,14 +71,14 @@ func H3client(addr *C.char, flag C.int) unsafe.Pointer {
 
 func calcValidOffset(lossRange []quic.ByteRange, payload []byte) uint64 {
 	if len(lossRange) == 0 {
-		return FRAMEPERSEG
+		return FRAMEPERSEG+1
 	}
 	if lossRange[0].Start == 0 {
 		// 先頭バイトがロスしてる
 		return 0
 	}
 	data := payload[:lossRange[0].Start]
-	v := len(bytes.Split(data, []byte{0x0, 0x1})) - 2
+	v := len(bytes.Split(data, []byte{0, 0, 0, 1})) - 2
 	return uint64(v) // 利用できる最大のフレームオフセット
 }
 

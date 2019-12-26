@@ -77,7 +77,7 @@ def calc_frame_average_ssim(log_dict, frame_ssim_list):
     s = 0
     maximum_frame_layer = calc_maximum_frame_layer(log_dict)
     for i in range(n):
-        for j, M in enumerate(maximum_frame_layer[n]): # ma_f_l = [3,3,3,2,2,1,0]
+        for j, M in enumerate(maximum_frame_layer[i]): # ma_f_l = [3,3,3,2,2,1,0]
             s += frame_ssim_list[frame_per_segs * i + j][M]
     return s / (n * frame_per_segs)
 

@@ -28,7 +28,7 @@ def download(unreliable, i):
 def main():
     while True:
         for i in range(3):
-            time.sleep(0.1)
+            # time.sleep(0.1)
             download(True, i)
 
     # start = time.time()
