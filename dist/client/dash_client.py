@@ -266,7 +266,7 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
     for segment_number, segment in enumerate(dp_list.values(), dp_object.video[current_bitrate].start):
         # dp_listは{int: dict}
         config_dash.LOG.info("Processing the segment {} : {}".format(segment_number, segment))
-        write_json()
+        # write_json()
         if not previous_bitrate:
             previous_bitrate = current_bitrate
         if SEGMENT_LIMIT:
@@ -358,7 +358,7 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
     # waiting for the player to finish playing
     while dash_player.playback_state not in dash_buffer.EXIT_STATES:
         time.sleep(1)
-    write_json()
+    # write_json()
     if not download:
         clean_files(file_identifier)
 
@@ -618,6 +618,9 @@ def main():
     else:
         config_dash.LOG.error("Unknown Playback parameter {}".format(PLAYBACK))
         return None
+
+    write_json()
+
 
 if __name__ == "__main__":
     sys.exit(main())
