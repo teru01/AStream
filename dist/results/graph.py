@@ -4,18 +4,22 @@ import matplotlib.pyplot as plt
 import glob
 import sys
 import os
+from argparse import ArgumentParser
+
+# def get_option():
+#     argparser = ArgumentParser()
+#     argparser.add_argument('-b', '--begin', type=str)
+#     argparser.add_argument('-e', '--end', type=str)
+#     return argparser.parse_args()
 
 def main():
-    nfile = 1
-    if len(sys.argv) != 3:
-        RuntimeError("specify file num")
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    results = sorted(glob.glob(current_dir + "/result_*.txt"))
+    if len(sys.argv) != 2:
+        RuntimeError("specify <dir>")
+    # current_dir = os.path.dirname(os.path.abspath(__file__))
+    folder = sys.argv[1]
+    results = sorted(glob.glob(folder + "/result_*.txt"))
     print(results)
-    target = results.index(sys.argv[1])
-    n = int(sys.argv[2])
-    results = results[target: target + n]
-    res_dict = {'proto': [], 'loss': [], 'bufratio': [], 'average ssim': [], 'delay': [], 'algor': []}
+    res_dict = {'proto': [], 'reliability': [], 'loss': [], 'bufratio': [], 'average ssim': [], 'delay': [], 'algor': []}
     # print(results)
     for file in results:
         with open(file) as f:
@@ -31,10 +35,10 @@ def main():
     
     result_df = pd.DataFrame.from_dict(res_dict)
     print(result_df)
-    g = sns.FacetGrid(result_df, col="delay")
-    g.map(sns.catplot, x="delay", y="ssim", hue="algor", kind="bar", data=result_df)
-    # sns_plot = 
-    plt.savefig("out.png")
+    sns.factorplot(x='loss', y='bufratio', data=result_df, hue='reliability', col='delay', kind='bar')
+    plt.savefig(folder + "_bufratio.png")
+    sns.factorplot(x='loss', y='average ssim', data=result_df, hue='reliability', col='delay')
+    plt.savefig(folder + "_ssim.png")
     
 
 if __name__ == "__main__":
