@@ -5,6 +5,7 @@ import sys
 import glob
 from argparse import ArgumentParser
 import os
+from pathlib import Path
 
 frame_per_segs = 48
 
@@ -125,7 +126,9 @@ def generate_stat(logFile, ssimFile, frame_ssim_file):
         with open(frame_ssim_file, 'r') as f_framessim:
             frame_ssim_list = json.loads(f_framessim.readline())
 
-        with open('{}/results/result_{}'.format(current_dir, logFile.split('/')[-1].replace('json', 'txt')), 'w') as f_result:
+        target_dir = str(sorted(filter(Path.is_dir, Path('.').glob('results/*')))[-1])
+
+        with open('{}/result_{}'.format(target_dir, logFile.split('/')[-1].replace('json', 'txt')), 'w') as f_result:
             f_result.write('proto: {}\nloss: {}\ndelay: {}\nbw: {}\nmpd: {}\nsvc_a: {}\nsvc_b: {}\nbuffer: {}\nalgor: {}\n'.format(log_dict['protocol'], log_dict['loss'], log_dict['delay'], log_dict['bandwidth'], log_dict['mpd'], log_dict['SVC_A'], log_dict['SVC_B'], log_dict['buffer_size'], log_dict['algor']))
             f_result.write("reliability: {}\n".format(log_dict['reliability']))
             f_result.write("bufratio: {}\n".format(calc_bufratio(log_dict)))
@@ -134,6 +137,7 @@ def generate_stat(logFile, ssimFile, frame_ssim_file):
 
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
+
 
 def main():
     logfiles = sorted(glob.glob(current_dir + "/ASTREAM_LOGS/ASTREAM_*"))
