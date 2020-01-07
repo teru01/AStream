@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"unsafe"
 	"strconv"
+	"time"
+	"context"
 	"github.com/lucas-clemente/quic-go/http3"
 	"github.com/lucas-clemente/quic-go"
 )
@@ -16,7 +18,12 @@ import (
 var hclient *http.Client
 const FRAMEPERSEG = 48
 
-func h3client(addr string, unreliable bool) ([]byte, uint64) {
+type Result struct {
+	data []byte
+	validOffset uint64
+}
+
+func h3client(addr string, unreliable bool) Result {
 	if hclient == nil {
 		hclient = &http.Client{
 			Transport: &http3.RoundTripper{
@@ -47,7 +54,7 @@ func h3client(addr string, unreliable bool) ([]byte, uint64) {
 			validOffset = FRAMEPERSEG+1
 		}
 	}
-	return vbuf.Bytes(), validOffset
+	return Result{data: vbuf.Bytes(), validOffset: validOffset}
 }
 
 //export H3client
@@ -59,14 +66,30 @@ func H3client(addr *C.char, flag C.int) unsafe.Pointer {
 	} else {
 		unreliable = false
 	}
-	resp, validOffset := h3client(s, unreliable)
-	fmt.Println("validOffset: ", validOffset)
-	length := make([]byte, 8)
-	offsetBuf := make([]byte, 8)
-	binary.LittleEndian.PutUint64(length, uint64(len(resp)))
-	binary.LittleEndian.PutUint64(offsetBuf, validOffset)
-	fmt.Println("len ", len(append(append(length, offsetBuf...), resp...)))
-	return C.CBytes(append(append(length, offsetBuf...), resp...))
+	ctx, cancel := context.WithTimeout(context.Background(), 20 * time.Second)
+	defer cancel()
+
+	ch := make(chan Result, 1)
+	go func() {
+		ch <- h3client(s, unreliable)
+	}()
+	select {
+	case result := <-ch:
+		resp := result.data
+		validOffset := result.validOffset
+		fmt.Println("validOffset: ", validOffset)
+		length := make([]byte, 8)
+		offsetBuf := make([]byte, 8)
+		binary.LittleEndian.PutUint64(length, uint64(len(resp)))
+		binary.LittleEndian.PutUint64(offsetBuf, validOffset)
+		fmt.Println("len ", len(append(append(length, offsetBuf...), resp...)))
+		return C.CBytes(append(append(length, offsetBuf...), resp...))
+	case <- ctx.Done():
+		fmt.Println("go timeout")
+		buf := make([]byte, 16)
+		return C.CBytes(buf)
+	}
+	return nil
 }
 
 func calcValidOffset(lossRange []quic.ByteRange, payload []byte) uint64 {
