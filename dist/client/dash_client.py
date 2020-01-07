@@ -86,8 +86,9 @@ class Connection:
             flag = 0
         ptr = self.request(url.encode('utf8'), flag)
         length = int.from_bytes(ptr.contents[:8], byteorder="little")
+        if length == 0:
+            return
         validOffset = int.from_bytes(ptr.contents[8:16], byteorder="little")
-        # print("ptr.contents[8:9]: ", ptr.contents[8:9])
         data = bytes(cast(ptr, POINTER(c_ubyte*(16 + length))).contents[16:])
         return data, validOffset
 
@@ -310,6 +311,7 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
                     eh_head_ind = current_playback_index + 2
                     safe_region = False
                     dl_threads = []
+                    bug_start_time = time.time()
                     while dash_player.playback_index + 1 < eh_head_ind <= segment_number:
                         if dash_player.buffer.qsize() > config_dash.SVC_A:
                             safe_region = True
@@ -339,8 +341,11 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
                                     # config_dash.LOG.warning("")
 
                         eh_head_ind += 1
-                    for th in dl_threads:
-                        th.join()
+                    # for th in dl_threads:
+                    #     th.join()
+                    # if time.time() - bug_start_time > 20:
+                    #     config_dash.JSON_HANDLE["timeout"] = True
+                    #     sys.exit(0)
 
             else:
                 config_dash.LOG.error("Unknown playback type:{}. Continuing with basic playback".format(playback_type))
