@@ -128,12 +128,15 @@ def generate_stat(logFile, ssimFile, frame_ssim_file):
 
         target_dir = str(sorted(filter(Path.is_dir, Path('.').glob('results/*')))[-1])
 
-        with open('{}/result_{}'.format(target_dir, logFile.split('/')[-1].replace('json', 'txt')), 'w') as f_result:
+        result_file = '{}/result_{}'.format(target_dir, logFile.split('/')[-1].replace('json', 'txt'))
+        with open(result_file, 'w') as f_result:
             f_result.write('proto: {}\nloss: {}\ndelay: {}\nbw: {}\nmpd: {}\nsvc_a: {}\nsvc_b: {}\nbuffer: {}\nalgor: {}\n'.format(log_dict['protocol'], log_dict['loss'], log_dict['delay'], log_dict['bandwidth'], log_dict['mpd'], log_dict['SVC_A'], log_dict['SVC_B'], log_dict['buffer_size'], log_dict['algor']))
             f_result.write("reliability: {}\n".format(log_dict['reliability']))
             f_result.write("bufratio: {}\n".format(calc_bufratio(log_dict)))
             f_result.write("average ssim: {}\n".format(calc_ssim(log_dict, ssim_dict, frame_ssim_list)))
             f_result.write(make_layer_str(log_dict))
+        
+        os.chown(result_file, 1000, 1000)
 
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
