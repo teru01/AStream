@@ -293,55 +293,33 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
                         config_dash.LOG.info('switching to SVC_STABLE')
 
                 elif state == config_dash.SVC_STATE_STABLE:
-                    bl_path = segment[bitrates[0]]
-                    segment_url = urllib.parse.urljoin(domain, bl_path)
-
-                    # download base layer
-                    download_wrapper(segment_url,
-                        file_identifier, previous_segment_times, recent_download_sizes,
-                        current_bitrate, segment_number, video_segment_duration, dash_player, config_dash.SVC_BASE_LAYER, False)
+                    max_safe_layer_id, _ = basic_dash2.basic_dash2("", bitrates, "", recent_download_sizes, previous_segment_times, current_bitrate)
+                    current_bitrate = bitrates[max_safe_layer_id]
+                    dl_threads = []
+                    for i in range(max_safe_layer_id + 1):
+                        segment_url = urllib.parse.urljoin(domain, segment[bitrates[i]])
+                        try:
+                            if i == 0:
+                                t = threading.Thread(target=download_wrapper, args=(segment_url,
+                                file_identifier, previous_segment_times, recent_download_sizes,
+                                current_bitrate, segment_number, video_segment_duration, dash_player, config_dash.SVC_BASE_LAYER, False)) # BLはreliable
+                            else:
+                                t = threading.Thread(target=download_wrapper, args=(segment_url,
+                                file_identifier, previous_segment_times, recent_download_sizes,
+                                current_bitrate, segment_number, video_segment_duration, dash_player, config_dash.SVC_EH_LAYER, unreliable_mode))
+                            dl_threads.append(t)
+                            # time.sleep(0.1)
+                            t.start()
+                        except RuntimeError as e:
+                            # キューへの挿入ができなかった
+                            pass
+                            # config_dash.LOG.warning("")
+                    for th in dl_threads:
+                        th.join()
 
                     if dash_player.buffer.qsize() > config_dash.SVC_THRESHOLD:
                         delay = dash_player.buffer.qsize() - config_dash.SVC_THRESHOLD
 
-                    max_safe_layer_id, _ = basic_dash2.basic_dash2("", bitrates, "", recent_download_sizes, previous_segment_times, current_bitrate)
-                    current_bitrate = bitrates[max_safe_layer_id]
-
-                    current_playback_index = dash_player.playback_index
-                    eh_head_ind = current_playback_index + 2
-                    safe_region = False
-                    dl_threads = []
-                    while dash_player.playback_index + 1 < eh_head_ind <= segment_number:
-                        if dash_player.buffer.qsize() > config_dash.SVC_A:
-                            safe_region = True
-                        elif dash_player.buffer.qsize() < config_dash.SVC_B:
-                            safe_region = False
-                        eh_head_layer_id = highest_received_layer(eh_head_ind, dash_player)
-                        if eh_head_layer_id < len(bitrates)-1:
-                            # 最高レイヤーでないならELをDL
-                            if bitrates[max_safe_layer_id] >= bitrates[eh_head_layer_id + 1] \
-                                or (safe_region and bitrates[max(max_safe_layer_id+1, len(bitrates)-1)] >= bitrates[eh_head_layer_id+1]):
-
-                                el_path = dp_list[eh_head_ind][bitrates[eh_head_layer_id+1]]
-                                segment_url = urllib.parse.urljoin(domain, el_path)
-                                config_dash.LOG.info("scheduled download = {}".format(segment_url.split('.')[-2:]))
-                                try:
-                                    t = threading.Thread(target=download_wrapper, args=(segment_url,
-                                        file_identifier, previous_segment_times, recent_download_sizes,
-                                        current_bitrate, eh_head_ind, video_segment_duration, dash_player, config_dash.SVC_EH_LAYER, unreliable_mode))
-                                    dl_threads.append(t)
-                                    # time.sleep(0.1)
-                                    t.start()
-                                    max_safe_layer_id, _ = basic_dash2.basic_dash2("", bitrates, "", recent_download_sizes, previous_segment_times, current_bitrate)
-                                    current_bitrate = bitrates[max_safe_layer_id]
-                                except RuntimeError as e:
-                                    # キューへの挿入ができなかった
-                                    pass
-                                    # config_dash.LOG.warning("")
-
-                        eh_head_ind += 1
-                    for th in dl_threads:
-                        th.join()
 
             else:
                 config_dash.LOG.error("Unknown playback type:{}. Continuing with basic playback".format(playback_type))
@@ -420,16 +398,17 @@ def download_wrapper(segment_url,
         segment_duration = segment_info['playback_length']
         dash_player.write(segment_info)
     elif segment_type == config_dash.SVC_EH_LAYER:
+        pass
         # キューから対応するセグメントを取り出し更新
-        with dash_player.buffer_lock:
-            bl_segment = dash_player.buffer.search_segment(segment_number)
-            if bl_segment == None:
-                config_dash.LOG.info('segnum: {} not found'.format(segment_number))
-                return
-            bl_segment['size'].append(segment_size)
-            bl_segment['bitrate'].append(current_bitrate)
-            bl_segment['data'].append(segment_filename)
-            bl_segment['URI'].append(segment_url)
+        # with dash_player.buffer_lock:
+        #     bl_segment = dash_player.buffer.search_segment(segment_number)
+        #     if bl_segment == None:
+        #         config_dash.LOG.info('segnum: {} not found'.format(segment_number))
+        #         return
+        #     bl_segment['size'].append(segment_size)
+        #     bl_segment['bitrate'].append(current_bitrate)
+        #     bl_segment['data'].append(segment_filename)
+        #     bl_segment['URI'].append(segment_url)
 
     # valid_frames_from_head = 
     config_dash.JSON_HANDLE["segment_info"].append((segment_name, current_bitrate, segment_size,
@@ -573,8 +552,9 @@ def main():
     config_dash.JSON_HANDLE['SVC_A'] = config_dash.SVC_A
     config_dash.JSON_HANDLE['SVC_B'] = config_dash.SVC_B
     config_dash.JSON_HANDLE['buffer_size'] = config_dash.SVC_THRESHOLD
-    config_dash.JSON_HANDLE['algor'] = 'svc'
+    config_dash.JSON_HANDLE['algor'] = 'svc-naive'
     config_dash.JSON_HANDLE['reliability'] = args.RELIABILITY
+    config_dash.JSON_HANDLE['BASIC_UPPER_THRESHOLD'] = config_dash.BASIC_UPPER_THRESHOLD
     
     global unreliable_mode
     if args.RELIABILITY == 'unreliable':
