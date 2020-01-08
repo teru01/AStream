@@ -1,0 +1,17 @@
+proto: h3
+loss: 2
+delay: 15ms
+bw: 50
+mpd: https://10.0.0.4:6666/720p/BBB-I-720p_short.mpd
+svc_a: 2
+svc_b: 2
+buffer: 3
+algor: svc
+reliability: unreliable
+bufratio: 0.03718233399262791
+average ssim: 0.952957138425926
+                                                                                          
+                                                                                          
+                          #  ##             #  #    #                                 #   
+##########################################################################################
+.         .         .         .         .         .         .         .         .         
