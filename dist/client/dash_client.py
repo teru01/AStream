@@ -86,8 +86,9 @@ class Connection:
             flag = 0
         ptr = self.request(url.encode('utf8'), flag)
         length = int.from_bytes(ptr.contents[:8], byteorder="little")
+        if length == 0:
+            return
         validOffset = int.from_bytes(ptr.contents[8:16], byteorder="little")
-        # print("ptr.contents[8:9]: ", ptr.contents[8:9])
         data = bytes(cast(ptr, POINTER(c_ubyte*(16 + length))).contents[16:])
         return data, validOffset
 
