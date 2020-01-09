@@ -19,7 +19,7 @@ def main():
     folder = sys.argv[1]
     results = sorted(glob.glob(folder + "/result_*.txt"))
     print(results)
-    res_dict = {'proto': [], 'reliability': [], 'loss': [], 'bufratio': [], 'average ssim': [], 'delay': [], 'algor': []}
+    res_dict = {'proto': [], 'reliability': [], 'loss': [], 'bufratio': [], 'average ssim': [], 'delay': [], 'algor': [], 'bw': []}
     # print(results)
     for file in results:
         with open(file) as f:
@@ -35,9 +35,9 @@ def main():
     
     result_df = pd.DataFrame.from_dict(res_dict)
     print(result_df)
-    sns.factorplot(x='loss', y='bufratio', data=result_df, hue='reliability', col='delay', kind='bar')
+    sns.factorplot(x='loss', y='bufratio', data=result_df, hue='reliability', col='bw', row='delay', kind='box')
     plt.savefig(folder + "_bufratio.png")
-    sns.factorplot(x='loss', y='average ssim', data=result_df, hue='reliability', col='delay')
+    sns.factorplot(x='loss', y='average ssim', data=result_df, hue='reliability', col='bw', row='delay')
     plt.savefig(folder + "_ssim.png")
     
 
