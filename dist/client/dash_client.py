@@ -296,7 +296,7 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
                     max_safe_layer_id, _ = basic_dash2.basic_dash2("", bitrates, "", recent_download_sizes, previous_segment_times, current_bitrate)
                     current_bitrate = bitrates[max_safe_layer_id]
                     dl_threads = []
-                    for i in range(min(max_safe_layer_id + 2, len(bitrates))):
+                    for i in range(min(max_safe_layer_id + 1, len(bitrates))):
                         segment_url = urllib.parse.urljoin(domain, segment[bitrates[i]])
                         try:
                             if i == 0:
@@ -554,7 +554,7 @@ def main():
     config_dash.JSON_HANDLE['SVC_A'] = config_dash.SVC_A
     config_dash.JSON_HANDLE['SVC_B'] = config_dash.SVC_B
     config_dash.JSON_HANDLE['buffer_size'] = config_dash.SVC_THRESHOLD
-    config_dash.JSON_HANDLE['algor'] = 'svc-naive-aggressive'
+    config_dash.JSON_HANDLE['algor'] = 'svc-naive-variableBW'
     config_dash.JSON_HANDLE['reliability'] = args.RELIABILITY
     config_dash.JSON_HANDLE['BASIC_UPPER_THRESHOLD'] = config_dash.BASIC_UPPER_THRESHOLD
     
