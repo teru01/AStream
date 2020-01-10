@@ -35,9 +35,8 @@ def main():
     
     result_df = pd.DataFrame.from_dict(res_dict)
     print(result_df)
-    graphtype = 'bar'
-    sns.factorplot(x='loss', y='bufratio', data=result_df, hue='reliability', col='bw', row='delay', kind=graphtype)
-    plt.savefig(folder + "_bufratio_{}.png".format(graphtype))
+    sns.factorplot(x='loss', y='bufratio', data=result_df, hue='reliability', col='bw', row='delay', kind='box')
+    plt.savefig(folder + "_bufratio.png")
     sns.factorplot(x='loss', y='average ssim', data=result_df, hue='reliability', col='bw', row='delay')
     plt.savefig(folder + "_ssim.png")
     
