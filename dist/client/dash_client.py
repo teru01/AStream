@@ -290,9 +290,7 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
                         file_identifier, previous_segment_times, recent_download_sizes,
                         current_bitrate, segment_number, video_segment_duration, dash_player, config_dash.SVC_BASE_LAYER, False)
 
-                    if dash_player.buffer.qsize() > config_dash.SVC_INITIAL_BUF:
-                        state = config_dash.SVC_STATE_STABLE
-                        config_dash.LOG.info('switching to SVC_STABLE')
+                    state = config_dash.SVC_STATE_STABLE
 
                 elif state == config_dash.SVC_STATE_STABLE:
                     max_safe_layer_id, _ = basic_dash2.basic_dash2("", bitrates, "", recent_download_sizes, previous_segment_times, current_bitrate)
