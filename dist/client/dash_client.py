@@ -265,6 +265,7 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
     # Start playback of all the segments
     delay = 0
     state = config_dash.SVC_STATE_INIT
+    sleep_times = 0
     for segment_number, segment in enumerate(dp_list.values(), dp_object.video[current_bitrate].start):
         # dp_listは{int: dict}
         config_dash.LOG.info("Processing the segment {} : {}".format(segment_number, segment))
@@ -305,8 +306,9 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
                 for th in dl_threads:
                     th.join()
 
-                    if dash_player.buffer.qsize() > config_dash.SVC_THRESHOLD:
-                        delay = dash_player.buffer.qsize() - config_dash.SVC_THRESHOLD
+                if dash_player.buffer.qsize() > config_dash.SVC_THRESHOLD:
+                    sleep_times += 1
+                    delay = dash_player.buffer.qsize() - config_dash.SVC_THRESHOLD
 
 
             else:
@@ -325,7 +327,8 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
     # waiting for the player to finish playing
     while dash_player.playback_state not in dash_buffer.EXIT_STATES:
         time.sleep(1)
-    # write_json()
+    config_dash.JSON_HANDLE['sleep'] = sleep_times
+    write_json()
     if not download:
         clean_files(file_identifier)
 
