@@ -281,42 +281,29 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
             current_bitrate = bitrates[0]
         else:
             if playback_type.upper() == "SVC":
-                if state == config_dash.SVC_STATE_INIT:
-                    bl_path = segment[bitrates[0]]
-                    segment_url = urllib.parse.urljoin(domain, bl_path)
-
-                    download_wrapper(segment_url,
-                        file_identifier, previous_segment_times, recent_download_sizes,
-                        current_bitrate, segment_number, video_segment_duration, dash_player, config_dash.SVC_BASE_LAYER, False)
-
-                    if dash_player.buffer.qsize() > config_dash.SVC_INITIAL_BUF:
-                        state = config_dash.SVC_STATE_STABLE
-                        config_dash.LOG.info('switching to SVC_STABLE')
-
-                elif state == config_dash.SVC_STATE_STABLE:
-                    max_safe_layer_id, _ = basic_dash2.basic_dash2("", bitrates, "", recent_download_sizes, previous_segment_times, current_bitrate)
-                    current_bitrate = bitrates[max_safe_layer_id]
-                    dl_threads = []
-                    for i in range(min(max_safe_layer_id + 2, len(bitrates))):
-                        segment_url = urllib.parse.urljoin(domain, segment[bitrates[i]])
-                        try:
-                            if i == 0:
-                                t = threading.Thread(target=download_wrapper, args=(segment_url,
-                                file_identifier, previous_segment_times, recent_download_sizes,
-                                current_bitrate, segment_number, video_segment_duration, dash_player, config_dash.SVC_BASE_LAYER, False)) # BLはreliable
-                            else:
-                                t = threading.Thread(target=download_wrapper, args=(segment_url,
-                                file_identifier, previous_segment_times, recent_download_sizes,
-                                current_bitrate, segment_number, video_segment_duration, dash_player, config_dash.SVC_EH_LAYER, unreliable_mode))
-                            dl_threads.append(t)
-                            # time.sleep(0.1)
-                            t.start()
-                        except RuntimeError as e:
-                            # キューへの挿入ができなかった
-                            pass
-                            # config_dash.LOG.warning("")
-                    for th in dl_threads:
-                        th.join()
+                max_safe_layer_id, _ = basic_dash2.basic_dash2("", bitrates, "", recent_download_sizes, previous_segment_times, current_bitrate)
+                current_bitrate = bitrates[max_safe_layer_id]
+                dl_threads = []
+                for i in range(min(max_safe_layer_id + 2, len(bitrates))):
+                    segment_url = urllib.parse.urljoin(domain, segment[bitrates[i]])
+                    try:
+                        if i == 0:
+                            t = threading.Thread(target=download_wrapper, args=(segment_url,
+                            file_identifier, previous_segment_times, recent_download_sizes,
+                            current_bitrate, segment_number, video_segment_duration, dash_player, config_dash.SVC_BASE_LAYER, False)) # BLはreliable
+                        else:
+                            t = threading.Thread(target=download_wrapper, args=(segment_url,
+                            file_identifier, previous_segment_times, recent_download_sizes,
+                            current_bitrate, segment_number, video_segment_duration, dash_player, config_dash.SVC_EH_LAYER, unreliable_mode))
+                        dl_threads.append(t)
+                        # time.sleep(0.1)
+                        t.start()
+                    except RuntimeError as e:
+                        # キューへの挿入ができなかった
+                        pass
+                        # config_dash.LOG.warning("")
+                for th in dl_threads:
+                    th.join()
 
                     if dash_player.buffer.qsize() > config_dash.SVC_THRESHOLD:
                         delay = dash_player.buffer.qsize() - config_dash.SVC_THRESHOLD
