@@ -561,8 +561,10 @@ def main():
     global unreliable_mode
     if args.RELIABILITY == 'unreliable':
         unreliable_mode = True
-    else:
+    elif args.RELIABILITY == 'reliable':
         unreliable_mode = False
+    else:
+        raise RuntimeError('invalid reliability param')
 
     
     if not MPD:
