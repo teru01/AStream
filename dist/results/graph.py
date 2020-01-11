@@ -35,6 +35,7 @@ def main():
     
     result_df = pd.DataFrame.from_dict(res_dict)
     print(result_df)
+    print('rel len: ', len(result_df.query('reliability == "reliable"')))
     graphkind = 'box'
     sns.factorplot(x='loss', y='bufratio', data=result_df, hue='reliability', col='bw', row='delay', kind=graphkind)
     plt.savefig(folder + "_bufratio_{}.png".format(graphkind))
