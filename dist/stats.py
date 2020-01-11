@@ -119,6 +119,9 @@ def generate_stat(logFile, ssimFile, frame_ssim_file):
 
         with open(logFile, 'r') as f:
             log_dict = json.loads(f.readline(), object_pairs_hook=OrderedDict)
+            if 'timeout' in log_dict:
+                print('exclude timeout result exiting...')
+                sys.exit(0)
 
         with open(ssimFile, 'r') as f_ssim:
             ssim_dict = json.loads(f_ssim.readline())
