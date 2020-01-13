@@ -15,11 +15,13 @@ import math
 
 def main():
     if len(sys.argv) != 3:
-        RuntimeError("specify <dir> <barkind>")
+        RuntimeError("specify <barkind> <dir...>")
     # current_dir = os.path.dirname(os.path.abspath(__file__))
-    folder = sys.argv[1]
-    graphkind = sys.argv[2]
-    results = sorted(glob.glob(folder + "/result_*.txt"))
+    folders = sys.argv[2:]
+    graphkind = sys.argv[1]
+    results = []
+    for f in folders:
+        results.extend(sorted(glob.glob(f + "/result_*.txt")))
     print(results)
     res_dict = {'proto': [], 'reliability': [], 'loss': [], 'bufratio': [], 'average ssim': [], 'delay': [], 'algor': [], 'bw': []}
     # print(results)
@@ -37,26 +39,32 @@ def main():
     
     result_df = pd.DataFrame.from_dict(res_dict)
     print(result_df)
-    print('rel len: ', len(result_df.query('reliability == "reliable"')))
-    print('unrel len: ', len(result_df.query('reliability == "unreliable"')))
-    result_df = clip_data(result_df)
-    print('reliable len after clip: ', len(result_df.query('reliability == "reliable"')))
-    print('unreliable len after clip: ', len(result_df.query('reliability == "unreliable"')))
-    sns.factorplot(x='loss', y='bufratio', data=result_df, hue='reliability', col='bw', row='delay', kind=graphkind, ci=68)
-    plt.savefig(folder + "_bufratio_{}.png".format(graphkind))
-    sns.factorplot(x='loss', y='average ssim', data=result_df, hue='reliability', col='bw', row='delay')
-    plt.savefig(folder + "_ssim.png")
+    result_df = change_protocol(result_df)
+    for name, group in result_df.groupby('proto'):
+        print(name, len(group))
+    # result_df = clip_data(result_df)
+    # for name, group in result_df.groupby('proto'):
+    #     print(name, len(group))
+    sns.factorplot(x='loss', y='bufratio', data=result_df, hue='proto', col='bw', row='delay', kind=graphkind, ci=68, hue_order=['h2 reliable', 'h3 reliable', 'h3 unreliable'])
+    plt.savefig(folders[-1][:-1] + "_bufratio_{}.png".format(graphkind))
+    sns.factorplot(x='loss', y='average ssim', data=result_df, hue='proto', col='bw', row='delay')
+    plt.savefig(folders[-1][:-1] + "_ssim.png")
     
+def change_protocol(df):
+    df.loc[(df['proto'] == 'h3') & (df['reliability'] == 'reliable'), 'proto'] = 'h3 reliable'
+    df.loc[(df['proto'] == 'h3') & (df['reliability'] == 'unreliable'), 'proto'] = 'h3 unreliable'
+    df.loc[(df['proto'] == 'h2') & (df['reliability'] == 'reliable'), 'proto'] = 'h2 reliable'
+    return df
+
 
 def clip_data(df):
     rate = 0.95
-    reliable = df.query('reliability == "reliable"')
-    unreliable = df.query('reliability == "unreliable"')
-    reliable = reliable.nlargest(math.ceil(len(reliable) * rate), columns='bufratio')
-    reliable = reliable.nsmallest(math.floor(len(reliable) * (1 - (1-rate)/rate)), columns='bufratio')
-    unreliable = unreliable.nlargest(math.ceil(len(unreliable) * rate), columns='bufratio')
-    unreliable = unreliable.nsmallest(math.floor(len(unreliable) * (1 - (1-rate)/rate)), columns='bufratio')
-    return pd.concat([reliable, unreliable])
+    ret_df = []
+    for name, group in df.groupby('proto'):
+        group = group.nlargest(math.ceil(len(group) * rate), columns='bufratio')
+        group = group.nsmallest(math.floor(len(group) * (1 - (1-rate)/rate)), columns='bufratio')
+        ret_df.append(group)
+    return pd.concat(ret_df)
 
 if __name__ == "__main__":
     main()
