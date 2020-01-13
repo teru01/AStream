@@ -71,27 +71,40 @@ class Connection:
         libh2 = cdll.LoadLibrary(os.path.join(os.path.dirname(__file__), "../golang/h2client.so"))
         if proto == "h2":
             self.request = libh2.H2client
+            self.request.argtypes = [c_char_p]
+            self.request.restype = POINTER(c_ubyte*8)
         elif proto == "h3":
             self.request = libh3.H3client
+            self.request.argtypes = [c_char_p, c_int]
+            self.request.restype = POINTER(c_ubyte*16)
         else:
             print("undefined protocol")
             sys.exit(0)
-        self.request.argtypes = [c_char_p, c_int]
-        self.request.restype = POINTER(c_ubyte*16)
+        self.proto = proto
 
     def read(self, url, unreliable):
-        if unreliable:
-            flag = 1
+        if self.proto == 'h2':
+            ptr = self.request(url.encode('utf8'))
+            length = int.from_bytes(ptr.contents, byteorder="little")
+            data = bytes(cast(ptr,
+                    POINTER(c_ubyte*(8 + length))
+                    ).contents[8:])
+            return data, 49
+        elif self.proto == 'h3':
+            if unreliable:
+                flag = 1
+            else:
+                flag = 0
+            ptr = self.request(url.encode('utf8'), flag)
+            length = int.from_bytes(ptr.contents[:8], byteorder="little")
+            if length == 0:
+                config_dash.JSON_HANDLE['timeout'] = True
+                return
+            validOffset = int.from_bytes(ptr.contents[8:16], byteorder="little")
+            data = bytes(cast(ptr, POINTER(c_ubyte*(16 + length))).contents[16:])
+            return data, validOffset
         else:
-            flag = 0
-        ptr = self.request(url.encode('utf8'), flag)
-        length = int.from_bytes(ptr.contents[:8], byteorder="little")
-        if length == 0:
-            config_dash.JSON_HANDLE['timeout'] = True
             return
-        validOffset = int.from_bytes(ptr.contents[8:16], byteorder="little")
-        data = bytes(cast(ptr, POINTER(c_ubyte*(16 + length))).contents[16:])
-        return data, validOffset
 
 def get_mpd(url):
     """ Module to download the MPD from the URL and save it to file"""
