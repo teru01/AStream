@@ -279,6 +279,7 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
     delay = 0
     state = config_dash.SVC_STATE_INIT
     sleep_times = 0
+    latest_dl_layer = 0
     for segment_number, segment in enumerate(dp_list.values(), dp_object.video[current_bitrate].start):
         # dp_listは{int: dict}
         config_dash.LOG.info("Processing the segment {} : {}".format(segment_number, segment))
@@ -317,9 +318,12 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
                                 file_identifier, previous_segment_times, recent_download_sizes,
                                 current_bitrate, segment_number, video_segment_duration, dash_player, config_dash.SVC_BASE_LAYER, False)) # BLはreliable
                             else:
+                                unreliable = unreliable_mode
+                                if max_safe_layer_id - latest_dl_layer >= 0 and i <= latest_dl_layer: #同じか増えた時
+                                    unreliable = False 
                                 t = threading.Thread(target=download_wrapper, args=(segment_url,
                                 file_identifier, previous_segment_times, recent_download_sizes,
-                                current_bitrate, segment_number, video_segment_duration, dash_player, config_dash.SVC_EH_LAYER, unreliable_mode))
+                                current_bitrate, segment_number, video_segment_duration, dash_player, config_dash.SVC_EH_LAYER, unreliable))
                             dl_threads.append(t)
                             # time.sleep(0.1)
                             t.start()
@@ -329,6 +333,7 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
                             # config_dash.LOG.warning("")
                     for th in dl_threads:
                         th.join()
+                    latest_dl_layer = max_safe_layer_id 
 
                 if dash_player.buffer.qsize() > config_dash.SVC_THRESHOLD:
                     sleep_times += 1
@@ -567,7 +572,7 @@ def main():
     config_dash.JSON_HANDLE['SVC_A'] = config_dash.SVC_A
     config_dash.JSON_HANDLE['SVC_B'] = config_dash.SVC_B
     config_dash.JSON_HANDLE['buffer_size'] = config_dash.SVC_THRESHOLD
-    config_dash.JSON_HANDLE['algor'] = 'svc-naive-variableBW'
+    config_dash.JSON_HANDLE['algor'] = 'svc-naive-variableBW-reliable-layer'
     config_dash.JSON_HANDLE['reliability'] = args.RELIABILITY
     config_dash.JSON_HANDLE['BASIC_UPPER_THRESHOLD'] = config_dash.BASIC_UPPER_THRESHOLD
     
