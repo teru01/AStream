@@ -544,7 +544,7 @@ def create_arguments(parser):
                         help="The Segment number limit")
     parser.add_argument('-d', '--DELAY', help="delay")
     parser.add_argument('-b', '--BANDWIDTH', help="bandwidth")
-    parser.add_argument('-f', '--BUFSIZE', help="buffer size")
+    parser.add_argument('-f', '--BUFSIZE', type=int, help="buffer size")
     parser.add_argument('-u', '--RELIABILITY', help="unreliable or not")
     parser.add_argument('-pro', '--PROTOCOL',
                         default="h2",
