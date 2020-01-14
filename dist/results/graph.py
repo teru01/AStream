@@ -49,7 +49,7 @@ def main():
     plt.savefig(folders[-1][:-1] + "_bufratio_{}.png".format(graphkind))
 
     for loss, _ in result_df.groupby('loss'):
-        result_df = result_df.append(pd.DataFrame.from_dict({'reliability': ['reliable'], 'bufratio': [0], 'delay': [None], 'algor': [None], 'bw': [None], 'loss': [loss], 'average ssim': [0.95346], 'proto': ['L0 border']}))
+        result_df = result_df.append(pd.DataFrame.from_dict({'reliability': ['reliable'], 'bufratio': [0], 'delay': [None], 'algor': [None], 'bw': [None], 'loss': [loss], 'average ssim': [0.95283], 'proto': ['L0 only']}))
     sns.factorplot(x='loss', y='average ssim', data=result_df, hue='proto')
     plt.savefig(folders[-1][:-1] + "_ssim.png")
     
