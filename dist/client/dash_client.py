@@ -40,6 +40,7 @@ DEFAULT_PLAYBACK = 'BASIC'
 DOWNLOAD_CHUNK = 1024
 
 unreliable_mode = False
+svc_buffer_size = None
 
 # Globals for arg parser with the default values
 # Not sure if this is the correct way ....
@@ -338,9 +339,9 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
                         th.join()
                     latest_dl_layer = max_safe_layer_id 
 
-                if dash_player.buffer.qsize() > config_dash.SVC_THRESHOLD:
+                if dash_player.buffer.qsize() > svc_buffer_size:
                     sleep_times += 1
-                    delay = dash_player.buffer.qsize() - config_dash.SVC_THRESHOLD
+                    delay = dash_player.buffer.qsize() - svc_buffer_size
 
 
             else:
@@ -548,6 +549,7 @@ def create_arguments(parser):
                         help="The Segment number limit")
     parser.add_argument('-d', '--DELAY', help="delay")
     parser.add_argument('-b', '--BANDWIDTH', help="bandwidth")
+    parser.add_argument('-f', '--BUFSIZE', help="buffer size")
     parser.add_argument('-u', '--RELIABILITY', help="unreliable or not")
     parser.add_argument('-pro', '--PROTOCOL',
                         default="h2",
@@ -574,18 +576,20 @@ def main():
     config_dash.JSON_HANDLE['mpd'] = MPD
     config_dash.JSON_HANDLE['SVC_A'] = config_dash.SVC_A
     config_dash.JSON_HANDLE['SVC_B'] = config_dash.SVC_B
-    config_dash.JSON_HANDLE['buffer_size'] = config_dash.SVC_THRESHOLD
+    config_dash.JSON_HANDLE['buffer_size'] = args.BUFSIZE
     config_dash.JSON_HANDLE['algor'] = 'svc-naive-variableBW-reliable-layer'
     config_dash.JSON_HANDLE['reliability'] = args.RELIABILITY
     config_dash.JSON_HANDLE['BASIC_UPPER_THRESHOLD'] = config_dash.BASIC_UPPER_THRESHOLD
     
-    global unreliable_mode
+    global unreliable_mode, svc_buffer_size
     if args.RELIABILITY == 'unreliable':
         unreliable_mode = True
     elif args.RELIABILITY == 'reliable':
         unreliable_mode = False
     else:
         raise RuntimeError('invalid reliability param')
+
+    svc_buffer_size = args.BUFSIZE
 
     
     if not MPD:
