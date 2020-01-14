@@ -45,7 +45,7 @@ def main():
     # result_df = clip_data(result_df)
     # for name, group in result_df.groupby('proto'):
     #     print(name, len(group))
-    sns.factorplot(x='loss', y='bufratio', data=result_df, hue='proto', col='bw', row='delay', kind=graphkind, ci=68, hue_order=['h2 reliable', 'h3 reliable', 'h3 unreliable'])
+    sns.factorplot(x='loss', y='bufratio', data=result_df, hue='proto', col='bw', row='delay', kind=graphkind, ci=68, hue_order=['h2 reliable', 'h3 reliable', 'h3 unreliable ver1', 'h3 unreliable ver2'])
     plt.savefig(folders[-1][:-1] + "_bufratio_{}.png".format(graphkind))
 
     for loss, _ in result_df.groupby('loss'):
@@ -55,7 +55,8 @@ def main():
     
 def change_protocol(df):
     df.loc[(df['proto'] == 'h3') & (df['reliability'] == 'reliable'), 'proto'] = 'h3 reliable'
-    df.loc[(df['proto'] == 'h3') & (df['reliability'] == 'unreliable'), 'proto'] = 'h3 unreliable'
+    df.loc[(df['proto'] == 'h3') & (df['reliability'] == 'unreliable') & (df['algor'] == 'svc-naive-variableBW'), 'proto'] = 'h3 unreliable ver1'
+    df.loc[(df['proto'] == 'h3') & (df['reliability'] == 'unreliable') & (df['algor'] == 'svc-naive-variableBW-reliable-layer'), 'proto'] = 'h3 unreliable ver2'
     df.loc[(df['proto'] == 'h2') & (df['reliability'] == 'reliable'), 'proto'] = 'h2 reliable'
     return df
 

@@ -280,6 +280,7 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
     state = config_dash.SVC_STATE_INIT
     sleep_times = 0
     latest_dl_layer = 0
+    reliably_get_count = 0
     for segment_number, segment in enumerate(dp_list.values(), dp_object.video[current_bitrate].start):
         # dp_listは{int: dict}
         config_dash.LOG.info("Processing the segment {} : {}".format(segment_number, segment))
@@ -320,7 +321,9 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
                             else:
                                 unreliable = unreliable_mode
                                 if max_safe_layer_id - latest_dl_layer >= 0 and i <= latest_dl_layer: #同じか増えた時
-                                    unreliable = False 
+                                    unreliable = False
+                                    reliably_get_count += 1
+                                    config_dash.JSON_HANDLE['reliably'] = reliably_get_count
                                 t = threading.Thread(target=download_wrapper, args=(segment_url,
                                 file_identifier, previous_segment_times, recent_download_sizes,
                                 current_bitrate, segment_number, video_segment_duration, dash_player, config_dash.SVC_EH_LAYER, unreliable))
