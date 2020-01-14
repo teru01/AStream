@@ -47,7 +47,10 @@ def main():
     #     print(name, len(group))
     sns.factorplot(x='loss', y='bufratio', data=result_df, hue='proto', col='bw', row='delay', kind=graphkind, ci=68, hue_order=['h2 reliable', 'h3 reliable', 'h3 unreliable'])
     plt.savefig(folders[-1][:-1] + "_bufratio_{}.png".format(graphkind))
-    sns.factorplot(x='loss', y='average ssim', data=result_df, hue='proto', col='bw', row='delay')
+
+    for loss, _ in result_df.groupby('loss'):
+        result_df = result_df.append(pd.DataFrame.from_dict({'reliability': ['reliable'], 'bufratio': [0], 'delay': [None], 'algor': [None], 'bw': [None], 'loss': [loss], 'average ssim': [0.95346], 'proto': ['L0 border']}))
+    sns.factorplot(x='loss', y='average ssim', data=result_df, hue='proto')
     plt.savefig(folders[-1][:-1] + "_ssim.png")
     
 def change_protocol(df):

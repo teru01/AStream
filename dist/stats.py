@@ -130,6 +130,8 @@ def generate_stat(logFile, ssimFile, frame_ssim_file):
             frame_ssim_list = json.loads(f_framessim.readline())
 
         target_dir = str(sorted(filter(Path.is_dir, Path('.').glob('results/*')))[-1])
+        if target_dir.split('/')[-1] > logFile[8:-5]:
+            raise RuntimeError('invalid result log file')
 
         result_file = '{}/result_{}'.format(target_dir, logFile.split('/')[-1].replace('json', 'txt'))
         with open(result_file, 'w') as f_result:
