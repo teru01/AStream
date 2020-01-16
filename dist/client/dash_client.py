@@ -303,6 +303,7 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
                         file_identifier, previous_segment_times, recent_download_sizes,
                         current_bitrate, segment_number, video_segment_duration, dash_player, config_dash.SVC_BASE_LAYER, False))
                     dl_threads.append(t)
+                    config_dash.LOG.info("scheduled download = {}".format(segment_url.split('.')[-2:]))
                     t.start()
                     if dash_player.buffer.qsize() > config_dash.SVC_THRESHOLD:
                         delay = dash_player.buffer.qsize() - config_dash.SVC_THRESHOLD
