@@ -99,7 +99,7 @@ class Connection:
             ptr = self.request(url.encode('utf8'), flag)
             length = int.from_bytes(ptr.contents[:8], byteorder="little")
             if length == 0:
-                config_dash.JSON_HANDLE['timeout'] = True
+                # config_dash.JSON_HANDLE['timeout'] = True
                 return
             validOffset = int.from_bytes(ptr.contents[8:16], byteorder="little")
             data = bytes(cast(ptr, POINTER(c_ubyte*(16 + length))).contents[16:])

@@ -66,7 +66,7 @@ func H3client(addr *C.char, flag C.int) unsafe.Pointer {
 	} else {
 		unreliable = false
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 20 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 50 * time.Second)
 	defer cancel()
 
 	ch := make(chan Result, 1)
