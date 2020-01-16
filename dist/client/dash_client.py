@@ -546,6 +546,7 @@ def create_arguments(parser):
     parser.add_argument('-b', '--BANDWIDTH', help="bandwidth")
     parser.add_argument('-f', '--BUFSIZE', type=int, help="buffer size")
     parser.add_argument('-u', '--RELIABILITY', help="unreliable or not")
+    parser.add_argument('-t', '--TRACE', help="trace name")
     parser.add_argument('-pro', '--PROTOCOL',
                         default="h2",
                         help="protocol[h2|h3]")
@@ -572,6 +573,7 @@ def main():
     config_dash.JSON_HANDLE['SVC_A'] = config_dash.SVC_A
     config_dash.JSON_HANDLE['SVC_B'] = config_dash.SVC_B
     config_dash.JSON_HANDLE['buffer_size'] = args.BUFSIZE
+    config_dash.JSON_HANDLE['trace'] = args.TRACE
     config_dash.JSON_HANDLE['algor'] = 'svc-naive-variableBW-reliable-layer'
     config_dash.JSON_HANDLE['reliability'] = args.RELIABILITY
     config_dash.JSON_HANDLE['BASIC_UPPER_THRESHOLD'] = config_dash.BASIC_UPPER_THRESHOLD
