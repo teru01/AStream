@@ -55,8 +55,8 @@ def main():
     
 def change_protocol(df):
     df.loc[(df['proto'] == 'h3') & (df['reliability'] == 'reliable'), 'proto'] = 'h3 reliable'
-    df.loc[(df['proto'] == 'h3') & (df['reliability'] == 'unreliable') & (df['algor'] == 'svc'), 'proto'] = 'h3 unreliable ver1'
-    df.loc[(df['proto'] == 'h2') & (df['reliability'] == 'reliable'), 'proto'] = 'h2 reliable'
+    df.loc[(df['proto'] == 'h3') & (df['reliability'] == 'unreliable'), 'proto'] = 'h3 unreliable ver1'
+    # df.loc[(df['proto'] == 'h2') & (df['reliability'] == 'reliable'), 'proto'] = 'h2 reliable'
     return df
 
 

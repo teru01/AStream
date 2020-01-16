@@ -264,6 +264,8 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
     # Start playback of all the segments
     delay = 0
     state = config_dash.SVC_STATE_INIT
+    dl_threads = []
+
     for segment_number, segment in enumerate(dp_list.values(), dp_object.video[current_bitrate].start):
         # dp_listは{int: dict}
         config_dash.LOG.info("Processing the segment {} : {}".format(segment_number, segment))
@@ -297,10 +299,11 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
                     segment_url = urllib.parse.urljoin(domain, bl_path)
 
                     # download base layer
-                    download_wrapper(segment_url,
+                    t = threading.Thread(target=download_wrapper, args=(segment_url,
                         file_identifier, previous_segment_times, recent_download_sizes,
-                        current_bitrate, segment_number, video_segment_duration, dash_player, config_dash.SVC_BASE_LAYER, False)
-
+                        current_bitrate, segment_number, video_segment_duration, dash_player, config_dash.SVC_BASE_LAYER, False))
+                    dl_threads.append(t)
+                    t.start()
                     if dash_player.buffer.qsize() > config_dash.SVC_THRESHOLD:
                         delay = dash_player.buffer.qsize() - config_dash.SVC_THRESHOLD
 
@@ -310,7 +313,6 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
                     current_playback_index = dash_player.playback_index
                     eh_head_ind = current_playback_index + 2
                     safe_region = False
-                    dl_threads = []
                     bug_start_time = time.time()
                     while dash_player.playback_index + 1 < eh_head_ind <= segment_number:
                         if dash_player.buffer.qsize() > config_dash.SVC_A:
@@ -318,7 +320,8 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
                         elif dash_player.buffer.qsize() < config_dash.SVC_B:
                             safe_region = False
                         eh_head_layer_id = highest_received_layer(eh_head_ind, dash_player)
-                        if eh_head_layer_id < len(bitrates)-1:
+
+                        if eh_head_layer_id != None and eh_head_layer_id < len(bitrates)-1:
                             # 最高レイヤーでないならELをDL
                             if bitrates[max_safe_layer_id] >= bitrates[eh_head_layer_id + 1] \
                                 or (safe_region and bitrates[max(max_safe_layer_id+1, len(bitrates)-1)] >= bitrates[eh_head_layer_id+1]):
@@ -341,11 +344,9 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
                                     # config_dash.LOG.warning("")
 
                         eh_head_ind += 1
-                    # for th in dl_threads:
-                    #     th.join()
-                    # if time.time() - bug_start_time > 20:
-                    #     config_dash.JSON_HANDLE["timeout"] = True
-                    #     sys.exit(0)
+                    for th in dl_threads:
+                        th.join()
+                    
 
             else:
                 config_dash.LOG.error("Unknown playback type:{}. Continuing with basic playback".format(playback_type))
@@ -369,7 +370,8 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
 
 def highest_received_layer(seg_number, dash_player):
     seg = dash_player.buffer.search_segment(seg_number)
-    # if seg == None:
+    if seg == None:
+        return None
 
     return len(seg['data']) - 1
 
@@ -577,7 +579,7 @@ def main():
     config_dash.JSON_HANDLE['SVC_A'] = config_dash.SVC_A
     config_dash.JSON_HANDLE['SVC_B'] = config_dash.SVC_B
     config_dash.JSON_HANDLE['buffer_size'] = config_dash.SVC_THRESHOLD
-    config_dash.JSON_HANDLE['algor'] = 'svc'
+    config_dash.JSON_HANDLE['algor'] = 'svc-para2'
     config_dash.JSON_HANDLE['reliability'] = args.RELIABILITY
     
     global unreliable_mode
