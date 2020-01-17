@@ -574,7 +574,7 @@ def main():
     config_dash.JSON_HANDLE['SVC_B'] = config_dash.SVC_B
     config_dash.JSON_HANDLE['buffer_size'] = args.BUFSIZE
     config_dash.JSON_HANDLE['trace'] = args.TRACE
-    config_dash.JSON_HANDLE['algor'] = 'svc-naive-variableBW-reliable-layer'
+    config_dash.JSON_HANDLE['algor'] = 'svc-naive-variableBW'
     config_dash.JSON_HANDLE['reliability'] = args.RELIABILITY
     config_dash.JSON_HANDLE['BASIC_UPPER_THRESHOLD'] = config_dash.BASIC_UPPER_THRESHOLD
     
