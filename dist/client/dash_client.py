@@ -553,6 +553,8 @@ def create_arguments(parser):
                         help="The Segment number limit")
     parser.add_argument('-d', '--DELAY', help="delay")
     parser.add_argument('-b', '--BANDWIDTH', help="bandwidth")
+    parser.add_argument('-f', '--BUFSIZE', help="bufsize")
+    parser.add_argument('-t', '--TRACE', help="trace")
     parser.add_argument('-u', '--RELIABILITY', help="unreliable or not")
     parser.add_argument('-pro', '--PROTOCOL',
                         default="h2",
@@ -581,6 +583,7 @@ def main():
     config_dash.JSON_HANDLE['SVC_B'] = config_dash.SVC_B
     config_dash.JSON_HANDLE['buffer_size'] = config_dash.SVC_THRESHOLD
     config_dash.JSON_HANDLE['algor'] = 'svc-para2'
+    config_dash.JSON_HANDLE['trace'] = args.TRACE
     config_dash.JSON_HANDLE['reliability'] = args.RELIABILITY
     
     global unreliable_mode
