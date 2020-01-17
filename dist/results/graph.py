@@ -45,7 +45,7 @@ def main():
     # result_df = clip_data(result_df)
     # for name, group in result_df.groupby('proto'):
     #     print(name, len(group))
-    sns.factorplot(x='loss', y='bufratio', data=result_df, hue='proto', col='bw', row='delay', kind=graphkind, ci=68, hue_order=['h2 reliable', 'h3 reliable', 'h3 unreliable ver1', 'h3 unreliable ver2'])
+    sns.factorplot(x='loss', y='bufratio', data=result_df, hue='proto', col='bw', row='delay', ci=68, kind=graphkind, hue_order=['h2 reliable', 'h3 reliable', 'h3 unreliable ver1', 'h3 unreliable ver2'])
     plt.savefig(folders[-1][:-1] + "_bufratio_{}.png".format(graphkind))
 
     for loss, _ in result_df.groupby('loss'):
