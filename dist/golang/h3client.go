@@ -105,5 +105,23 @@ func calcValidOffset(lossRange []quic.ByteRange, payload []byte) uint64 {
 	return uint64(v) // 利用できる最大のフレームオフセット
 }
 
+func calcValidRange(lossRange []quic.ByteRange, payload []byte) []frameRange {
+	result := make([]frameRange, 0)
+
+	if len(lossRange) == 0 {
+		return append(result, frameRange{0, FRAMEPERSEG})
+	}
+	if lossRange[0].Start != 0 {
+		data := payload[:lossRange[0].Start]
+		v := len(bytes.Split(data, []byte{0, 0, 0, 1})) - 2
+		result = append(result, frameRange{0, v})
+	}
+	if lossRange[len(lossRange)-1].End != protocol.ByteCount(len(payload)-1) {
+		data := payload[lossRange[len(lossRange)-1].End:]
+		v := len(bytes.Split(data, []byte{0, 0, 0, 1})) - 1
+		result = append(result, frameRange{FRAMEPERSEG-v, FRAMEPERSEG})
+	}
+	return result // 利用できる最大のフレームオフセット
+}
 
 func main() {}
