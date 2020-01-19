@@ -7,18 +7,17 @@ import os
 from argparse import ArgumentParser
 import math
 
-# def get_option():
-#     argparser = ArgumentParser()
-#     argparser.add_argument('-b', '--begin', type=str)
-#     argparser.add_argument('-e', '--end', type=str)
-#     return argparser.parse_args()
+def get_option():
+    argparser = ArgumentParser()
+    argparser.add_argument('folders', type=str, nargs='+')
+    argparser.add_argument('-f', '--outfilename', type=str)
+    argparser.add_argument('-g', '--graphkind', type=str, default='bar')
+    return argparser.parse_args()
 
 def main():
-    if len(sys.argv) != 3:
-        RuntimeError("specify <barkind> <dir...>")
-    # current_dir = os.path.dirname(os.path.abspath(__file__))
-    folders = sys.argv[2:]
-    graphkind = sys.argv[1]
+    args = get_option()
+    graphkind = args.graphkind
+    folders = args.folders
     results = []
     for f in folders:
         results.extend(sorted(glob.glob(f + "/result_*.txt")))
@@ -42,24 +41,42 @@ def main():
     result_df = change_protocol(result_df)
     for name, group in result_df.groupby('proto'):
         print(name, len(group))
-    result_df = clip_data(result_df)
-    for name, group in result_df.groupby('proto'):
-        print(name, len(group))
-    sns.factorplot(x='loss', y='bufratio', data=result_df, hue='proto', col='bw', row='delay', ci=68, kind=graphkind, hue_order=['h2 reliable', 'h3 reliable', 'h3 unreliable ver1', 'h3 unreliable ver2'])
-    plt.savefig(folders[-1][:-1] + "_bufratio_{}.png".format(graphkind))
+    # result_df = clip_data(result_df)
+    # for name, group in result_df.groupby('proto'):
+    #     print(name, len(group))
 
-    for loss, _ in result_df.groupby('loss'):
-        result_df = result_df.append(pd.DataFrame.from_dict({'reliability': ['reliable'], 'bufratio': [0], 'delay': [None], 'algor': [None], 'bw': [None], 'loss': [loss], 'average ssim': [0.95283], 'proto': ['L0 only']}))
-    sns.factorplot(x='loss', y='average ssim', data=result_df, hue='proto')
+    result_df = cut_loss(result_df, [0, 1, 3, 4, 4.5, 5])
+
+    result_df = result_df.rename(columns={'proto': 'method', 'loss': 'packet loss rate(%)'})
+    ax = sns.factorplot(x='packet loss rate(%)', y='bufratio', data=result_df, hue='method', ci=68, kind=graphkind, hue_order=['normal', 'proposed'])
+    # handles, labels = ax.get_legend_handles_labels()
+    # ax.legend(handles=handles[1:], labels=labels[1:])
+    # lg = ax.fig
+    # print(lg)
+    # lg.texts[1]
+    if args.outfilename == '':
+        plt.savefig(folders[-1][:-1] + "_bufratio_{}.png".format(graphkind))
+    else:
+        plt.savefig(args.outfilename + "_bufratio_{}.png".format(graphkind))
+
+    for loss, _ in result_df.groupby('packet loss rate(%)'):
+        result_df = result_df.append(pd.DataFrame.from_dict({'reliability': ['reliable'], 'bufratio': [0], 'delay': [None], 'algor': [None], 'bw': [None], 'packet loss rate(%)': [loss], 'average ssim': [0.95283], 'method': ['L0 only']}))
+    sns.factorplot(x='packet loss rate(%)', y='average ssim', data=result_df, hue='method')
     plt.savefig(folders[-1][:-1] + "_ssim.png")
     
 def change_protocol(df):
-    df.loc[(df['proto'] == 'h3') & (df['reliability'] == 'reliable'), 'proto'] = 'h3 reliable'
-    df.loc[(df['proto'] == 'h3') & (df['reliability'] == 'unreliable') & (df['algor'] == 'svc-naive-variableBW'), 'proto'] = 'h3 unreliable ver1'
+    df.loc[(df['proto'] == 'h3') & (df['reliability'] == 'reliable'), 'proto'] = 'normal'
+    df.loc[(df['proto'] == 'h3') & (df['reliability'] == 'unreliable') & (df['algor'] == 'svc-naive-variableBW'), 'proto'] = 'proposed'
     df.loc[(df['proto'] == 'h3') & (df['reliability'] == 'unreliable') & (df['algor'] == 'svc-naive-variableBW-reliable-layer'), 'proto'] = 'h3 unreliable ver2'
     df.loc[(df['proto'] == 'h2') & (df['reliability'] == 'reliable'), 'proto'] = 'h2 reliable'
     return df
 
+def cut_loss(df, loss_set):
+    ret_df = []
+    for loss, loss_g in df.groupby('loss'):
+        if loss in loss_set:
+            ret_df.append(loss_g)
+    return pd.concat(ret_df)
 
 def clip_data(df):
     rate = 1.5
