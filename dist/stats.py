@@ -112,6 +112,16 @@ def calc_ssim(log_dict, ssim_dict, frame_ssim_list):
     else:
         return calc_average_ssim(log_dict, ssim_dict)
 
+def calc_adjusted_ssim(log_dict, ssim):
+    n = log_dict['segment_number']
+    if 'interruptions' in log_dict:
+        if 'total_duration' in log_dict['interruptions']:
+            inter = log_dict['interruptions']['total_duration']
+            frames = (frame_per_segs / 2) * inter
+            return ssim * (n * frame_per_segs / (n * frame_per_segs + frames))
+    return ssim
+
+
 def generate_stat(logFile, ssimFile, frame_ssim_file):
         print("logfile: ", logFile)
         print("ssimfile: ", ssimFile)
@@ -138,7 +148,9 @@ def generate_stat(logFile, ssimFile, frame_ssim_file):
             f_result.write('proto: {}\nloss: {}\ndelay: {}\nbw: {}\nmpd: {}\nsvc_a: {}\nsvc_b: {}\nbuffer: {}\nalgor: {}\n'.format(log_dict['protocol'], log_dict['loss'], log_dict['delay'], log_dict['bandwidth'], log_dict['mpd'], log_dict['SVC_A'], log_dict['SVC_B'], log_dict['buffer_size'], log_dict['algor']))
             f_result.write("reliability: {}\n".format(log_dict['reliability']))
             f_result.write("bufratio: {}\n".format(calc_bufratio(log_dict)))
-            f_result.write("average ssim: {}\n".format(calc_ssim(log_dict, ssim_dict, frame_ssim_list)))
+            ssim = calc_ssim(log_dict, ssim_dict, frame_ssim_list)
+            f_result.write("average ssim: {}\n".format(ssim))
+            f_result.write("assim: {}\n".format(calc_adjusted_ssim(log_dict, ssim)))
             f_result.write(make_layer_str(log_dict))
         
         os.chown(result_file, 1000, 1000)
