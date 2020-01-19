@@ -77,7 +77,7 @@ class Connection:
         elif proto == "h3":
             self.request = libh3.H3client
             self.request.argtypes = [c_char_p, c_int]
-            self.request.restype = POINTER(c_ubyte*16)
+            self.request.restype = POINTER(c_ubyte*40)
         else:
             print("undefined protocol")
             sys.exit(0)
@@ -101,8 +101,13 @@ class Connection:
             if length == 0:
                 # config_dash.JSON_HANDLE['timeout'] = True
                 return
-            validOffset = int.from_bytes(ptr.contents[8:16], byteorder="little")
-            data = bytes(cast(ptr, POINTER(c_ubyte*(16 + length))).contents[16:])
+            validOffset = [0] * 4
+            validOffset[0] = int.from_bytes(ptr.contents[8:16], byteorder="little")
+            validOffset[1] = int.from_bytes(ptr.contents[16:24], byteorder="little")
+            validOffset[2] = int.from_bytes(ptr.contents[24:32], byteorder="little")
+            validOffset[3] = int.from_bytes(ptr.contents[32:40], byteorder="little")
+
+            data = bytes(cast(ptr, POINTER(c_ubyte*(40 + length))).contents[40:])
             return data, validOffset
         else:
             return
@@ -172,12 +177,12 @@ def download_segment(segment_url, dash_folder, unreliable):
     make_sure_path_exists(os.path.dirname(segment_filename))
     segment_file_handle = open(segment_filename, 'wb')
 
-    segment_data, valid_offset_from_head = connection.read(segment_url, unreliable)
+    segment_data, valid_offsets = connection.read(segment_url, unreliable)
     segment_file_handle.write(segment_data)
     segment_file_handle.close()
     #print "segment size = {}".format(segment_size)
     #print "segment filename = {}".format(segment_filename)
-    return len(segment_data), segment_filename, segment_data, valid_offset_from_head
+    return len(segment_data), segment_filename, segment_data, valid_offsets
 
 
 def get_media_all(domain, media_info, file_identifier, done_queue):
