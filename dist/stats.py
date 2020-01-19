@@ -114,9 +114,9 @@ def calc_ssim(log_dict, ssim_dict, frame_ssim_list):
 
 def calc_adjusted_ssim(log_dict, ssim):
     n = log_dict['segment_number']
-    if 'interruptions' in log_dict:
-        if 'total_duration' in log_dict['interruptions']:
-            inter = log_dict['interruptions']['total_duration']
+    if 'interruptions' in log_dict['playback_info']:
+        if 'total_duration' in log_dict['playback_info']['interruptions']:
+            inter = log_dict['playback_info']['interruptions']['total_duration']
             frames = (frame_per_segs / 2) * inter
             return ssim * (n * frame_per_segs / (n * frame_per_segs + frames))
     return ssim
