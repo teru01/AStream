@@ -56,7 +56,7 @@ def calc_maximum_frame_layer(log_dict):
         seg_ind = int(seg.split('.')[-1][3:])
         layer = int(lay.split('.')[0][1:])
 
-        loss_range = int(segment[4])
+        loss_range = segment[4]
 
         layer_of_segments[seg_ind].append((layer, loss_range))
 
@@ -67,7 +67,7 @@ def calc_maximum_frame_layer(log_dict):
             continue
         for layer, loss_range in l:
             for j in range(frame_per_segs):
-                if j < loss_range:
+                if (loss_range[0] <= j < loss_range[1]) or (loss_range[1] != 0 and (loss_range[2] <= j < loss_range[3])):
                     if layer - max_frame_of_segments[i][j] <= 1:
                         max_frame_of_segments[i][j] = layer
     return max_frame_of_segments
@@ -137,7 +137,6 @@ def generate_stat(logFile, ssimFile, frame_ssim_file):
         with open(result_file, 'w') as f_result:
             f_result.write('proto: {}\nloss: {}\ndelay: {}\nbw: {}\nmpd: {}\nsvc_a: {}\nsvc_b: {}\nbuffer: {}\nalgor: {}\n'.format(log_dict['protocol'], log_dict['loss'], log_dict['delay'], log_dict['bandwidth'], log_dict['mpd'], log_dict['SVC_A'], log_dict['SVC_B'], log_dict['buffer_size'], log_dict['algor']))
             f_result.write("reliability: {}\n".format(log_dict['reliability']))
-            f_result.write("trace: {}\n".format(log_dict['trace']))
             f_result.write("bufratio: {}\n".format(calc_bufratio(log_dict)))
             f_result.write("average ssim: {}\n".format(calc_ssim(log_dict, ssim_dict, frame_ssim_list)))
             f_result.write(make_layer_str(log_dict))
