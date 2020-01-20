@@ -11,6 +11,7 @@ reliability: reliable
 bufratio: 0.033199104135622645
 average ssim: 0.9554251960648148
 assim: 0.9237059354868613
+ratebuf: 0.05
                                                                                           
                              #             #  #                                           
          ###       ####     ###     #     ### ##   # ###       ###  # # #      #   # ###  
