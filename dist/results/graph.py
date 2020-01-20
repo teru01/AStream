@@ -59,13 +59,13 @@ def main():
         img_name = args.outfilename
     plt.savefig(img_name + "_bufratio_{}.png".format(graphkind))
 
+    sns.factorplot(x='packet loss rate(%)', y='assim', data=result_df, hue='method', ci=68, scale=0.7)
+    plt.savefig(img_name + "_assim.png")
     for loss, _ in result_df.groupby('packet loss rate(%)'):
         result_df = result_df.append(pd.DataFrame.from_dict({'reliability': ['reliable'], 'bufratio': [0], 'delay': [None], 'algor': [None], 'bw': [None], 'packet loss rate(%)': [loss], 'average ssim': [0.95283], 'method': ['L0 only']}))
     sns.factorplot(x='packet loss rate(%)', y='average ssim', data=result_df, hue='method')
     plt.savefig(img_name + "_ssim.png")
 
-    # sns.factorplot(x='packet loss rate(%)', y='assim', data=result_df, hue='method')
-    # plt.savefig(img_name + "_assim.png")
 
     
 def change_protocol(df):
