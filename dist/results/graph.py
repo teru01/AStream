@@ -22,7 +22,7 @@ def main():
     for f in folders:
         results.extend(sorted(glob.glob(f + "/result_*.txt")))
     print(results)
-    res_dict = {'proto': [], 'reliability': [], 'loss': [], 'bufratio': [], 'average ssim': [], 'delay': [], 'algor': [], 'bw': []}
+    res_dict = {'proto': [], 'reliability': [], 'loss': [], 'bufratio': [], 'average ssim': [], 'delay': [], 'algor': [], 'bw': [], 'assim': []}
     # print(results)
     for file in results:
         with open(file) as f:
@@ -41,9 +41,9 @@ def main():
     result_df = change_protocol(result_df)
     for name, group in result_df.groupby('proto'):
         print(name, len(group))
-    # result_df = clip_data(result_df)
-    # for name, group in result_df.groupby('proto'):
-    #     print(name, len(group))
+    result_df = clip_data(result_df)
+    for name, group in result_df.groupby('proto'):
+        print(name, len(group))
 
     result_df = cut_loss(result_df, [0, 1, 3, 4, 4.5, 5])
 
@@ -54,15 +54,19 @@ def main():
     # lg = ax.fig
     # print(lg)
     # lg.texts[1]
-    if args.outfilename == '':
-        plt.savefig(folders[-1][:-1] + "_bufratio_{}.png".format(graphkind))
-    else:
-        plt.savefig(args.outfilename + "_bufratio_{}.png".format(graphkind))
+    img_name = folders[-1][:-1]
+    if args.outfilename != None:
+        img_name = args.outfilename
+    plt.savefig(img_name + "_bufratio_{}.png".format(graphkind))
 
     for loss, _ in result_df.groupby('packet loss rate(%)'):
         result_df = result_df.append(pd.DataFrame.from_dict({'reliability': ['reliable'], 'bufratio': [0], 'delay': [None], 'algor': [None], 'bw': [None], 'packet loss rate(%)': [loss], 'average ssim': [0.95283], 'method': ['L0 only']}))
     sns.factorplot(x='packet loss rate(%)', y='average ssim', data=result_df, hue='method')
-    plt.savefig(folders[-1][:-1] + "_ssim.png")
+    plt.savefig(img_name + "_ssim.png")
+
+    # sns.factorplot(x='packet loss rate(%)', y='assim', data=result_df, hue='method')
+    # plt.savefig(img_name + "_assim.png")
+
     
 def change_protocol(df):
     df.loc[(df['proto'] == 'h3') & (df['reliability'] == 'reliable'), 'proto'] = 'normal'
