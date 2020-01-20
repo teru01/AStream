@@ -116,13 +116,12 @@ def calc_ssim(log_dict, ssim_dict, frame_ssim_list):
 
 def calc_adjusted_ssim(log_dict, ssim):
     n = log_dict['segment_number']
-    if 'interruptions' in log_dict['playback_info']:
-        if 'total_duration' in log_dict['playback_info']['interruptions']:
-            inter = log_dict['playback_info']['interruptions']['total_duration']
-            frames = (frame_per_segs / 2) * inter
-            return ssim * (n * frame_per_segs / (n * frame_per_segs + frames))
-    return ssim
+    inter = log_dict['playback_info']['interruptions']['total_duration']
+    frames = (frame_per_segs / 2) * inter
+    return ssim * (n * frame_per_segs / (n * frame_per_segs + frames))
 
+def calc_rateBuf(log_dict):
+    return log_dict['playback_info']['interruptions']['count'] / log_dict['video_metadata']['playback_duration']
 
 def generate_stat(logFile, ssimFile, frame_ssim_file):
         print("logfile: ", logFile)
@@ -154,6 +153,7 @@ def generate_stat(logFile, ssimFile, frame_ssim_file):
             ssim = calc_ssim(log_dict, ssim_dict, frame_ssim_list)
             f_result.write("average ssim: {}\n".format(ssim))
             f_result.write("assim: {}\n".format(calc_adjusted_ssim(log_dict, ssim)))
+            f_result.write("ratebuf: {}\n".format(calc_rateBuf(log_dict)))
             f_result.write(make_layer_str(log_dict))
         
         os.chown(result_file, 1000, 1000)
