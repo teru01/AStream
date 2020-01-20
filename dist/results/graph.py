@@ -22,7 +22,7 @@ def main():
     for f in folders:
         results.extend(sorted(glob.glob(f + "/result_*.txt")))
     print(results)
-    res_dict = {'proto': [], 'reliability': [], 'loss': [], 'bufratio': [], 'average ssim': [], 'delay': [], 'algor': [], 'bw': [], 'assim': []}
+    res_dict = {'proto': [], 'reliability': [], 'loss': [], 'bufratio': [], 'average ssim': [], 'delay': [], 'algor': [], 'bw': [], 'assim': [], 'ratebuf': []}
     # print(results)
     for file in results:
         with open(file) as f:
@@ -61,6 +61,10 @@ def main():
 
     sns.factorplot(x='packet loss rate(%)', y='assim', data=result_df, hue='method', ci=68, scale=0.7)
     plt.savefig(img_name + "_assim.png")
+    
+    sns.factorplot(x='packet loss rate(%)', y='ratebuf', data=result_df, hue='method', ci=68, scale=0.7)
+    plt.savefig(img_name + "_ratebuf.png")
+    
     for loss, _ in result_df.groupby('packet loss rate(%)'):
         result_df = result_df.append(pd.DataFrame.from_dict({'reliability': ['reliable'], 'bufratio': [0], 'delay': [None], 'algor': [None], 'bw': [None], 'packet loss rate(%)': [loss], 'average ssim': [0.95283], 'method': ['L0 only']}))
     sns.factorplot(x='packet loss rate(%)', y='average ssim', data=result_df, hue='method')
