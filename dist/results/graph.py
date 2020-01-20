@@ -42,6 +42,7 @@ def main():
     for name, group in result_df.groupby('proto'):
         print(name, len(group))
     result_df = clip_data(result_df)
+    result_df = clip_data(result_df, 'assim')
     for name, group in result_df.groupby('proto'):
         print(name, len(group))
 
@@ -70,9 +71,7 @@ def main():
     
 def change_protocol(df):
     df.loc[(df['proto'] == 'h3') & (df['reliability'] == 'reliable'), 'proto'] = 'normal'
-    df.loc[(df['proto'] == 'h3') & (df['reliability'] == 'unreliable') & (df['algor'] == 'svc-naive-variableBW'), 'proto'] = 'proposed'
-    df.loc[(df['proto'] == 'h3') & (df['reliability'] == 'unreliable') & (df['algor'] == 'svc-naive-variableBW-reliable-layer'), 'proto'] = 'h3 unreliable ver2'
-    df.loc[(df['proto'] == 'h2') & (df['reliability'] == 'reliable'), 'proto'] = 'h2 reliable'
+    df.loc[(df['proto'] == 'h3') & (df['reliability'] == 'unreliable'), 'proto'] = 'proposed'
     return df
 
 def cut_loss(df, loss_set):
@@ -82,12 +81,12 @@ def cut_loss(df, loss_set):
             ret_df.append(loss_g)
     return pd.concat(ret_df)
 
-def clip_data(df):
+def clip_data(df, cat='bufratio'):
     rate = 1.5
     ret_df = []
     for protoname, group in df.groupby('proto'):
         for loss, loss_g in group.groupby('loss'):
-            col = loss_g['bufratio']
+            col = loss_g[cat]
             q1 = col.describe()['25%']
             q3 = col.describe()['75%']
             iqr = q3 - q1
