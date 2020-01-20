@@ -13,6 +13,8 @@ def get_option(log_file, ssim_file, frame_ssim_file, n):
     argparser = ArgumentParser()
     argparser.add_argument('-l', '--logFile', type=str, default=log_file)
     argparser.add_argument('-s', '--ssimFile', type=str, default=ssim_file)
+    argparser.add_argument('--fullPathFromFile', type=str)
+    argparser.add_argument('--fullPathToFile', type=str)
     argparser.add_argument('-f', '--frameSsimFile', type=str, default=frame_ssim_file)
     argparser.add_argument('-n', '--num', type=int, default=n)
     return argparser.parse_args()
@@ -130,8 +132,8 @@ def generate_stat(logFile, ssimFile, frame_ssim_file):
         with open(logFile, 'r') as f:
             log_dict = json.loads(f.readline(), object_pairs_hook=OrderedDict)
             if 'timeout' in log_dict:
-                print('exclude timeout result exiting...')
-                sys.exit(0)
+                raise RuntimeError('exclude timeout result exiting...')
+                
 
         with open(ssimFile, 'r') as f_ssim:
             ssim_dict = json.loads(f_ssim.readline())
@@ -147,7 +149,7 @@ def generate_stat(logFile, ssimFile, frame_ssim_file):
         with open(result_file, 'w') as f_result:
             f_result.write('proto: {}\nloss: {}\ndelay: {}\nbw: {}\nmpd: {}\nsvc_a: {}\nsvc_b: {}\nbuffer: {}\nalgor: {}\n'.format(log_dict['protocol'], log_dict['loss'], log_dict['delay'], log_dict['bandwidth'], log_dict['mpd'], log_dict['SVC_A'], log_dict['SVC_B'], log_dict['buffer_size'], log_dict['algor']))
             f_result.write("reliability: {}\n".format(log_dict['reliability']))
-            f_result.write("trace: {}\n".format(log_dict['trace']))
+            # f_result.write("trace: {}\n".format(log_dict['trace']))
             f_result.write("bufratio: {}\n".format(calc_bufratio(log_dict)))
             ssim = calc_ssim(log_dict, ssim_dict, frame_ssim_list)
             f_result.write("average ssim: {}\n".format(ssim))
@@ -169,6 +171,16 @@ def main():
     print(ssimfiles[-1])
     print(frame_ssim_files[-1])
     args = get_option(logfiles[-1], ssimfiles[-1], frame_ssim_files[-1], 1)
+    if args.fullPathFromFile and args.fullPathToFile:
+        for file in logfiles:
+            if args.fullPathFromFile <= file <= args.fullPathToFile:
+                try:
+                    generate_stat(file, args.ssimFile, args.frameSsimFile)
+                except:
+                    pass
+    else:
+        pass
+    print(logfiles)
     generate_stat(args.logFile, args.ssimFile, args.frameSsimFile)
 
 
