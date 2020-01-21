@@ -120,6 +120,9 @@ def calc_adjusted_ssim(log_dict, ssim):
     frames = (frame_per_segs / 2) * inter
     return ssim * (n * frame_per_segs / (n * frame_per_segs + frames))
 
+def calc_extended_assim(log_dict, assim):
+    return assim / log_dict['playback_info']['interruptions']['count']
+
 def calc_rateBuf(log_dict):
     return log_dict['playback_info']['interruptions']['count'] / log_dict['video_metadata']['playback_duration']
 
@@ -152,8 +155,10 @@ def generate_stat(logFile, ssimFile, frame_ssim_file):
             f_result.write("bufratio: {}\n".format(calc_bufratio(log_dict)))
             ssim = calc_ssim(log_dict, ssim_dict, frame_ssim_list)
             f_result.write("average ssim: {}\n".format(ssim))
-            f_result.write("assim: {}\n".format(calc_adjusted_ssim(log_dict, ssim)))
+            assim = calc_adjusted_ssim(log_dict, ssim)
+            f_result.write("assim: {}\n".format(assim))
             f_result.write("ratebuf: {}\n".format(calc_rateBuf(log_dict)))
+            f_result.write("exssim: {}\n".format(calc_extended_assim(log_dict, assim)))
             f_result.write(make_layer_str(log_dict))
         
         os.chown(result_file, 1000, 1000)
